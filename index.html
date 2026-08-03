@@ -1,0 +1,1679 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Office Hub</title>
+<style>
+:root{
+  --paper:#F1F4F3; --surface:#FFFFFF; --sunk:#E8ECEA; --raise:#FFFFFF;
+  --ink:#121816; --ink-2:#4A5451; --ink-3:#7C8683;
+  --rule:#DBE1DE; --rule-2:#C1C8C5;
+  --accent:#0D5C52; --accent-ink:#FFFFFF; --accent-soft:#DCEAE6;
+  --todo-fg:#5D6965; --todo-bd:#BFC7C3;
+  --work-bg:#B26B00; --work-fg:#FFFFFF;
+  --done-bg:#3D6B4F; --done-fg:#FFFFFF;
+  --stuck-bg:#B03830; --stuck-fg:#FFFFFF;
+  --warn-bg:#FBF0DC; --warn-fg:#6B4405; --warn-bd:#E8CE9C;
+  --err-bg:#FAE9E7;  --err-fg:#83261F;  --err-bd:#EBC0BB;
+  --ok-bg:#E2EFE7;   --ok-fg:#29513A;   --ok-bd:#B9D4C4;
+  --scrim:rgba(18,24,22,.42);
+  --shadow:0 1px 2px rgba(18,24,22,.05), 0 12px 34px -12px rgba(18,24,22,.18);
+  --sans:"IBM Plex Sans Hebrew","IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root{
+  --paper:#0E1312; --surface:#171C1A; --sunk:#121716; --raise:#1C2220;
+  --ink:#E6ECE9; --ink-2:#98A39F; --ink-3:#6A7571;
+  --rule:#272E2B; --rule-2:#38403C;
+  --accent:#4FBFA9; --accent-ink:#05221E; --accent-soft:#142E29;
+  --todo-fg:#98A39F; --todo-bd:#38403C;
+  --work-bg:#C07713; --work-fg:#1A1200;
+  --done-bg:#3A6F50; --done-fg:#EAF4EE;
+  --stuck-bg:#BC463D; --stuck-fg:#FFF3F1;
+  --warn-bg:#2E230F; --warn-fg:#E9C27C; --warn-bd:#4A3819;
+  --err-bg:#2E1614;  --err-fg:#E9A79F;  --err-bd:#4A2320;
+  --ok-bg:#14291D;   --ok-fg:#8FC5A4;   --ok-bd:#24422F;
+  --scrim:rgba(0,0,0,.6);
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 16px 40px -14px rgba(0,0,0,.6);
+}}
+:root[data-theme="dark"]{
+  --paper:#0E1312; --surface:#171C1A; --sunk:#121716; --raise:#1C2220;
+  --ink:#E6ECE9; --ink-2:#98A39F; --ink-3:#6A7571;
+  --rule:#272E2B; --rule-2:#38403C;
+  --accent:#4FBFA9; --accent-ink:#05221E; --accent-soft:#142E29;
+  --todo-fg:#98A39F; --todo-bd:#38403C;
+  --work-bg:#C07713; --work-fg:#1A1200;
+  --done-bg:#3A6F50; --done-fg:#EAF4EE;
+  --stuck-bg:#BC463D; --stuck-fg:#FFF3F1;
+  --warn-bg:#2E230F; --warn-fg:#E9C27C; --warn-bd:#4A3819;
+  --err-bg:#2E1614;  --err-fg:#E9A79F;  --err-bd:#4A2320;
+  --ok-bg:#14291D;   --ok-fg:#8FC5A4;   --ok-bd:#24422F;
+  --scrim:rgba(0,0,0,.6);
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 16px 40px -14px rgba(0,0,0,.6);
+}
+:root[data-theme="light"]{
+  --paper:#F1F4F3; --surface:#FFFFFF; --sunk:#E8ECEA; --raise:#FFFFFF;
+  --ink:#121816; --ink-2:#4A5451; --ink-3:#7C8683;
+  --rule:#DBE1DE; --rule-2:#C1C8C5;
+  --accent:#0D5C52; --accent-ink:#FFFFFF; --accent-soft:#DCEAE6;
+  --todo-fg:#5D6965; --todo-bd:#BFC7C3;
+  --work-bg:#B26B00; --work-fg:#FFFFFF;
+  --done-bg:#3D6B4F; --done-fg:#FFFFFF;
+  --stuck-bg:#B03830; --stuck-fg:#FFFFFF;
+  --warn-bg:#FBF0DC; --warn-fg:#6B4405; --warn-bd:#E8CE9C;
+  --err-bg:#FAE9E7;  --err-fg:#83261F;  --err-bd:#EBC0BB;
+  --ok-bg:#E2EFE7;   --ok-fg:#29513A;   --ok-bd:#B9D4C4;
+  --scrim:rgba(18,24,22,.42);
+  --shadow:0 1px 2px rgba(18,24,22,.05), 0 12px 34px -12px rgba(18,24,22,.18);
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;
+  line-height:1.6;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+a{color:var(--accent)}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums;unicode-bidi:isolate}
+[dir="rtl"] .num{font-family:var(--sans);letter-spacing:0}
+.mono{font-family:var(--mono);font-size:12.5px;unicode-bidi:isolate}
+.lbl{font-family:var(--mono);font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-3);font-weight:400}
+[dir="rtl"] .lbl{font-family:var(--sans);letter-spacing:0;text-transform:none;font-size:12px}
+.dim{color:var(--ink-2)} .dim3{color:var(--ink-3)} .nowrap{white-space:nowrap}
+
+.shell{max-width:1240px;margin:0 auto;padding:0 20px 120px}
+
+/* ---- app bar ---- */
+.bar{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:20px 0 14px;flex-wrap:wrap}
+.brandwrap{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.brand{font-size:19px;font-weight:500;letter-spacing:-.02em}
+.brand em{font-style:normal;color:var(--accent)}
+.today{font-size:12.5px;color:var(--ink-3)}
+.bar-acts{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.seg{display:inline-flex;border:1px solid var(--rule-2);border-radius:8px;overflow:hidden;background:var(--surface)}
+.seg button{border:0;background:transparent;color:var(--ink-3);padding:7px 10px;font-size:12px;
+  font-weight:500;display:inline-flex;align-items:center;gap:5px;line-height:1}
+.seg button+button{border-inline-start:1px solid var(--rule)}
+.seg button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent)}
+.seg svg{width:14px;height:14px}
+
+/* ---- tabs ---- */
+.tabs{display:flex;gap:2px;overflow-x:auto;border-bottom:1px solid var(--rule);margin-bottom:20px}
+.tabs button{background:none;border:0;border-bottom:2px solid transparent;padding:10px 13px;
+  font-size:13.5px;color:var(--ink-3);white-space:nowrap;margin-bottom:-1px}
+.tabs button:hover{color:var(--ink)}
+.tabs button.on{color:var(--ink);border-bottom-color:var(--accent);font-weight:500}
+.tabs b{display:inline-block;margin-inline-start:6px;background:var(--sunk);color:var(--ink-3);
+  border-radius:999px;padding:0 6px;font-size:11px;font-weight:500;line-height:17px;vertical-align:1px}
+.tabs button.on b{background:var(--accent-soft);color:var(--accent)}
+
+/* ---- buttons ---- */
+.btn{border:1px solid var(--rule-2);background:var(--surface);color:var(--ink);border-radius:8px;
+  padding:8px 12px;font-size:13px;font-weight:500;line-height:1;display:inline-flex;align-items:center;
+  gap:7px;white-space:nowrap;transition:background .12s,border-color .12s}
+.btn:hover{background:var(--sunk)}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn-sm{font-size:12px;padding:6px 10px;border-radius:7px}
+select,input[type=number],input[type=text]{background:var(--surface);border:1px solid var(--rule-2);
+  border-radius:8px;padding:7px 11px;font-size:13px;color:var(--ink)}
+
+/* ---- head + surfaces ---- */
+.head{display:flex;align-items:baseline;gap:11px;flex-wrap:wrap;margin-bottom:5px}
+.head h2{margin:0;font-size:18px;font-weight:500;letter-spacing:-.01em}
+.sub{color:var(--ink-2);font-size:13.5px;margin:0 0 18px;max-width:74ch;line-height:1.6}
+.panelwrap{background:var(--surface);border:1px solid var(--rule);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+.toolbar{display:flex;align-items:center;gap:9px;padding:11px 14px;background:var(--sunk);
+  border-bottom:1px solid var(--rule);flex-wrap:wrap}
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:12px}
+.pad{padding:15px 17px}
+
+/* ---- table ---- */
+.tblwrap{overflow-x:auto}
+table.t{width:100%;border-collapse:collapse}
+table.t th{text-align:start;padding:10px 14px;border-bottom:1px solid var(--rule);white-space:nowrap;
+  font-family:var(--mono);font-size:10.5px;font-weight:400;letter-spacing:.11em;
+  text-transform:uppercase;color:var(--ink-3)}
+[dir="rtl"] table.t th{font-family:var(--sans);letter-spacing:0;text-transform:none;font-size:12px}
+table.t td{padding:10px 14px;border-bottom:1px solid var(--rule);vertical-align:top;font-size:13.5px}
+table.t tbody tr:last-child td{border-bottom:0}
+table.t tbody tr.click{cursor:pointer;transition:background .12s}
+table.t tbody tr.click:hover{background:var(--sunk)}
+
+/* ---- pills ---- */
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;padding:5px 11px;
+  border-radius:999px;white-space:nowrap;line-height:1;background:var(--sunk);color:var(--ink-2)}
+.p-todo{color:var(--todo-fg);border:1px dashed var(--todo-bd);background:transparent}
+.p-work{background:var(--work-bg);color:var(--work-fg)}
+.p-done{background:var(--done-bg);color:var(--done-fg)}
+.p-stuck{background:var(--stuck-bg);color:var(--stuck-fg)}
+.p-hi{background:var(--stuck-bg);color:var(--stuck-fg)}
+.p-me{background:var(--warn-bg);color:var(--warn-fg);border:1px solid var(--warn-bd)}
+.p-lo{color:var(--todo-fg);border:1px dashed var(--todo-bd);background:transparent}
+.p-ok{background:var(--ok-bg);color:var(--ok-fg);border:1px solid var(--ok-bd)}
+.p-rev{background:var(--warn-bg);color:var(--warn-fg);border:1px solid var(--warn-bd)}
+.p-ac{background:var(--accent-soft);color:var(--accent)}
+.notfound{color:var(--ink-3);font-style:italic}
+
+.banner{display:flex;gap:10px;align-items:flex-start;padding:11px 13px;border-radius:10px;
+  font-size:13.5px;line-height:1.55;background:var(--warn-bg);color:var(--warn-fg);border:1px solid var(--warn-bd)}
+.empty{padding:48px 24px;text-align:center;color:var(--ink-3);font-size:13.5px}
+
+.kv{display:grid;grid-template-columns:170px 1fr;gap:7px 16px;font-size:13.5px;margin:0}
+.kv dt{color:var(--ink-3);font-size:12px;padding-top:2px}
+.kv dd{margin:0}
+
+.grid{display:grid;gap:14px}
+.g3{grid-template-columns:repeat(auto-fit,minmax(215px,1fr))}
+.g2{grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+.metric{background:var(--surface);border:1px solid var(--rule);border-radius:12px;padding:14px 16px}
+.metric .v{font-size:26px;font-weight:500;letter-spacing:-.02em;line-height:1.2}
+.metric .l{font-size:12.5px;color:var(--ink-3);margin-top:2px}
+
+/* ---- flow ---- */
+.stage{background:var(--surface);border:1px solid var(--rule);border-radius:12px;padding:14px 16px}
+.stage.skip{opacity:.55}
+.stagehd{display:flex;flex-wrap:wrap;align-items:center;gap:9px;margin-bottom:10px}
+.stepn{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;
+  border-radius:50%;background:var(--sunk);color:var(--ink-3);font-size:11.5px;font-weight:500;flex:none;
+  font-family:var(--mono)}
+.stage.act .stepn{background:var(--accent);color:var(--accent-ink)}
+.stagehd b{font-size:14px;font-weight:500}
+.stagehd .wf{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);
+  border:1px solid var(--rule-2);border-radius:4px;padding:1px 5px;margin-inline-start:auto}
+.conn{height:14px;border-inline-start:2px solid var(--rule-2);margin-inline-start:26px}
+.rulerow{display:flex;flex-wrap:wrap;gap:9px;align-items:baseline;padding:6px 0;
+  border-bottom:1px solid var(--rule);font-size:13px}
+.rulerow:last-of-type{border-bottom:0}
+.rulerow .mk{font-family:var(--mono);font-size:11px;min-width:58px;flex:none;color:var(--ink-3)}
+.rulerow.win{color:var(--done-bg)} .rulerow.win .mk{color:var(--done-bg)}
+.rulerow.trip{color:var(--warn-fg)} .rulerow.trip .mk{color:var(--warn-fg)}
+.rulerow .why{margin-inline-start:auto;color:var(--ink-3);font-size:12.5px}
+
+/* ---- mail ---- */
+.mailbox{background:var(--surface);border:1px solid var(--rule);border-radius:12px;overflow:hidden;box-shadow:var(--shadow)}
+.mailhd{padding:13px 16px;border-bottom:1px solid var(--rule);background:var(--sunk);font-size:13px}
+.mailhd .row{display:flex;gap:10px;padding:2px 0}
+.mailhd .row>span:first-child{color:var(--ink-3);width:64px;flex:none;font-size:12px;padding-top:1px}
+.mailbody{padding:16px;white-space:pre-wrap;font-size:13.5px;line-height:1.7;
+  font-family:var(--mono);unicode-bidi:plaintext}
+[dir="rtl"] .mailbody{font-family:var(--sans)}
+
+/* ---- sheet ---- */
+.scrim{position:fixed;inset:0;background:var(--scrim);z-index:40;display:none}
+.scrim.on{display:block}
+.sheet{position:fixed;inset-block:0;inset-inline-end:0;width:min(470px,100%);background:var(--raise);
+  border-inline-start:1px solid var(--rule-2);z-index:41;display:none;flex-direction:column;
+  box-shadow:var(--shadow);overflow-y:auto}
+.sheet.on{display:flex}
+.shead{position:sticky;top:0;background:var(--raise);border-bottom:1px solid var(--rule);
+  padding:15px 18px;display:flex;align-items:flex-start;gap:12px;z-index:1}
+.shead h3{margin:0;font-size:15px;font-weight:500;line-height:1.35}
+.xbtn{margin-inline-start:auto;width:28px;height:28px;border:0;background:transparent;color:var(--ink-3);
+  border-radius:7px;display:inline-flex;align-items:center;justify-content:center;flex:none;font-size:20px;line-height:1}
+.xbtn:hover{background:var(--sunk);color:var(--ink)}
+.ssec{padding:15px 18px;border-bottom:1px solid var(--rule)}
+.ssec h4{margin:0 0 10px;font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;
+  color:var(--ink-3);font-weight:400;font-family:var(--mono)}
+[dir="rtl"] .ssec h4{font-family:var(--sans);letter-spacing:0;text-transform:none;font-size:12px}
+
+@media (max-width:640px){
+  .shell{padding:0 13px 90px}
+  .kv{grid-template-columns:1fr;gap:1px 0}
+  .kv dd{margin-bottom:9px}
+  .brand{font-size:17px}
+}
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <header class="bar">
+    <div class="brandwrap">
+      <div class="brand">Office<em>Hub</em></div>
+      <div class="today" id="tagline"></div>
+    </div>
+    <div class="bar-acts">
+      <div class="seg" role="group" id="langSeg">
+        <button type="button" data-lang="en" aria-pressed="false">EN</button>
+        <button type="button" data-lang="he" aria-pressed="false">עב</button>
+      </div>
+      <div class="seg" role="group" id="themeSeg">
+        <button type="button" data-theme="light" aria-pressed="false" title="Light">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4"/></svg>
+        </button>
+        <button type="button" data-theme="dark" aria-pressed="false" title="Dark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8.5 8.5 0 019.5 4a8.5 8.5 0 1010.5 10.5z"/></svg>
+        </button>
+      </div>
+      <span class="pill p-me" id="srcPill"></span>
+    </div>
+  </header>
+
+  <div class="tabs" id="tabs"></div>
+  <main id="view">
+    <div class="card pad">
+      <b>Scripts have not run.</b>
+      <div class="dim" style="margin-top:6px">The page loaded but no JavaScript executed.
+      Open this file in a browser rather than an embedded viewer.</div>
+    </div>
+  </main>
+</div>
+
+<div class="scrim" id="scrim" onclick="closeSheet()"></div>
+<aside class="sheet" id="sheet" aria-label="Details"></aside>
+
+<script>
+/* A startup error looks exactly like an empty app, which cost real time once.
+   Anything thrown before or during boot is written into the page instead. */
+window.onerror = function (msg, src, line, col) {
+  var v = document.getElementById("view");
+  if (v) v.innerHTML = '<div class="card pad"><b>Startup error</b>'
+    + '<div class="mono dim" style="margin-top:8px;white-space:pre-wrap">'
+    + String(msg) + "\n" + String(src || "?") + ":" + line + ":" + col + "</div></div>";
+  return false;
+};
+</script>
+<script>
+/* ---- data.js ---- */
+/* Office Hub - mock data.
+ *
+ * Every object here mirrors the exact shape of the Supabase table that will
+ * replace it. Same field names, same allowed values. When the real database
+ * arrives, only the data source changes - no screen is touched.
+ *
+ * Free-text fields carry both languages, the way the DailyTask AI seed rows
+ * do, so the prototype reads naturally in either direction. Enum values stay
+ * English because that is what the database stores; the interface translates
+ * them for display.
+ *
+ * Tables mirrored: people, routing_rules, documents, tasks, notifications
+ */
+
+window.OFFICE_HUB_DATA = (function () {
+  "use strict";
+
+  var DEPARTMENTS = ["Sales", "Finance", "Support", "HR", "Management", "General"];
+  var DOC_TYPES = ["invoice", "request", "report", "complaint", "contract", "quote", "lead", "other"];
+  var URGENCIES = ["Low", "Medium", "High"];
+  var CHANNELS = ["drive", "form", "gmail"];
+  var STATUSES = ["processed", "needs_review"];
+
+  /* ---------------------------------------------------------------- people */
+
+  var people = [
+    {
+      id: "p1", slug: "dana",
+      full_name: { en: "Dana Shani", he: "דנה שני" },
+      email: "autorderart+dana@gmail.com",
+      role_title: { en: "Office manager", he: "מנהלת משרד" },
+      department: "Management",
+      is_active: true, away_until: null, backup_person: "p2"
+    },
+    {
+      id: "p2", slug: "yael",
+      full_name: { en: "Yael Brenner", he: "יעל ברנר" },
+      email: "autorderart+yael@gmail.com",
+      role_title: { en: "Bookkeeper", he: "מנהלת חשבונות" },
+      department: "Finance",
+      is_active: true, away_until: null, backup_person: "p1"
+    },
+    {
+      id: "p3", slug: "omer",
+      full_name: { en: "Omer Katz", he: "עומר כץ" },
+      email: "autorderart+omer@gmail.com",
+      role_title: { en: "Support lead", he: "ראש צוות תמיכה" },
+      department: "Support",
+      is_active: true, away_until: "2026-08-09", backup_person: "p1"
+    },
+    {
+      id: "p4", slug: "avi",
+      full_name: { en: "Avi Haviv", he: "אבי חביב" },
+      email: "autorderart@gmail.com",
+      role_title: { en: "Founder", he: "מייסד" },
+      department: "Sales",
+      is_active: true, away_until: null, backup_person: "p1"
+    },
+    {
+      id: "p5", slug: "noa",
+      full_name: { en: "Noa Ferber", he: "נועה פרבר" },
+      email: "autorderart+noa@gmail.com",
+      role_title: { en: "Operations", he: "תפעול" },
+      department: "General",
+      is_active: true, away_until: null, backup_person: "p1"
+    }
+  ];
+
+  /* --------------------------------------------------------- routing rules */
+  /* A null match field means "do not care". Rules are evaluated by rank,
+   * lowest first, and the first rule that matches wins. Rank 99 is the
+   * catch-all - without it an item can fall through with no owner. */
+
+  var routing_rules = [
+    { id: "r1", rank: 10,
+      label: { en: "Large invoice goes to the manager", he: "חשבונית גדולה למנהלת" },
+      match_channel: null, match_doc_type: "invoice", match_department: null,
+      match_urgency: null, min_amount: 5000, assign_to: "p1", is_active: true },
+
+    { id: "r2", rank: 20,
+      label: { en: "Ordinary invoices", he: "חשבוניות רגילות" },
+      match_channel: null, match_doc_type: "invoice", match_department: null,
+      match_urgency: null, min_amount: null, assign_to: "p2", is_active: true },
+
+    { id: "r3", rank: 25,
+      label: { en: "Quotes to bookkeeping", he: "הצעות מחיר להנהלת חשבונות" },
+      match_channel: null, match_doc_type: "quote", match_department: null,
+      match_urgency: null, min_amount: null, assign_to: "p2", is_active: true },
+
+    { id: "r4", rank: 30,
+      label: { en: "Urgent complaints to the manager", he: "תלונות דחופות למנהלת" },
+      match_channel: null, match_doc_type: "complaint", match_department: null,
+      match_urgency: "High", min_amount: null, assign_to: "p1", is_active: true },
+
+    { id: "r5", rank: 40,
+      label: { en: "Complaints to support", he: "תלונות לתמיכה" },
+      match_channel: null, match_doc_type: "complaint", match_department: null,
+      match_urgency: null, min_amount: null, assign_to: "p3", is_active: true },
+
+    { id: "r6", rank: 50,
+      label: { en: "Leads from the website form", he: "לידים מהטופס באתר" },
+      match_channel: "form", match_doc_type: null, match_department: null,
+      match_urgency: null, min_amount: null, assign_to: "p4", is_active: true },
+
+    { id: "r7", rank: 60,
+      label: { en: "Requests to sales", he: "בקשות למכירות" },
+      match_channel: null, match_doc_type: "request", match_department: "Sales",
+      match_urgency: null, min_amount: null, assign_to: "p4", is_active: true },
+
+    { id: "r8", rank: 70,
+      label: { en: "Reports and contracts to management", he: "דוחות וחוזים להנהלה" },
+      match_channel: null, match_doc_type: "report", match_department: null,
+      match_urgency: null, min_amount: null, assign_to: "p1", is_active: true },
+
+    { id: "r9", rank: 99,
+      label: { en: "Catch-all", he: "תפס־הכל" },
+      match_channel: null, match_doc_type: null, match_department: null,
+      match_urgency: null, min_amount: null, assign_to: "p5", is_active: true }
+  ];
+
+  /* ------------------------------------------------------------- documents */
+  /* These six mirror the six files in smart-doc-assistant/test-documents.
+   * deadline_text stays exactly as the document wrote it - that is the whole
+   * point of the field - so it is not translated. */
+
+  var documents = [
+    {
+      id: "d1",
+      channel: "drive",
+      source_ref: "1aBcD-drive-file-id-001",
+      file_name: "1-invoice-nordwind.txt",
+      file_link: "https://drive.google.com/file/d/1aBcD-drive-file-id-001/view",
+      received_at: "2026-08-03T09:14:00Z",
+      document_type: "invoice",
+      sender_or_company: "Nordwind Supplies Ltd.",
+      summary: {
+        en: "Tax invoice NW-2026-0417 for office chairs, monitor arms and assembly. Total due 4,153.60 ILS including VAT. Payment terms are NET 7 from the invoice date.",
+        he: "חשבונית מס NW-2026-0417 עבור כסאות משרד, זרועות למסך והרכבה. סך לתשלום 4,153.60 ש\"ח כולל מע\"מ. תנאי תשלום שוטף 7 מיום הוצאת החשבונית."
+      },
+      requested_action: {
+        en: "Transfer payment and send the confirmation to billing@nordwind-supplies.com",
+        he: "לבצע העברה ולשלוח אישור ל־ billing@nordwind-supplies.com"
+      },
+      deadline_text: "2026-08-04",
+      deadline_date: "2026-08-04",
+      urgency: "High",
+      department: "Finance",
+      amount: 4153.6,
+      confidence: "High",
+      status: "processed",
+      review_reason: null,
+      assigned_to: "p2",
+      matched_rule: "r2",
+      task_id: "t1"
+    },
+    {
+      id: "d2",
+      channel: "form",
+      source_ref: "form-sub-2026-07-30-0042",
+      file_name: "Enquiry - BrightPath Tech",
+      file_link: "",
+      received_at: "2026-07-30T13:02:00Z",
+      document_type: "lead",
+      sender_or_company: "BrightPath Tech",
+      summary: {
+        en: "Dana Levi wants to enrol six team members in the AI Engineer Core Track. She asks about a group rate, company invoicing and the autumn cohort start date.",
+        he: "דנה לוי מעוניינת לרשום שישה עובדים למסלול AI Engineer Core Track. שואלת על מחיר קבוצתי, חשבונית לחברה ומועד פתיחת מחזור הסתיו."
+      },
+      requested_action: {
+        en: "Reply with group pricing, invoicing options and available cohort dates",
+        he: "להשיב עם מחיר קבוצתי, אפשרויות חיוב ומועדים פנויים"
+      },
+      deadline_text: "Not found",
+      deadline_date: null,
+      urgency: "Medium",
+      department: "Sales",
+      amount: null,
+      confidence: "High",
+      status: "processed",
+      review_reason: null,
+      assigned_to: "p4",
+      matched_rule: "r6",
+      task_id: "t2"
+    },
+    {
+      id: "d3",
+      channel: "gmail",
+      source_ref: "gmail-msg-18f3a7c2b1",
+      file_name: "Complaint - order ORD-88214",
+      file_link: "",
+      received_at: "2026-07-31T16:47:00Z",
+      document_type: "complaint",
+      sender_or_company: "Margolin & Partners, Accounting",
+      summary: {
+        en: "Two of four printers arrived damaged and one does not power on. Two support calls went unanswered. This is the third consecutive order with a problem.",
+        he: "שניים מתוך ארבעה מדפסים הגיעו פגומים ואחד אינו נדלק. שתי פניות לתמיכה לא נענו. זו ההזמנה השלישית ברצף עם תקלה."
+      },
+      requested_action: {
+        en: "Replace the dead printer, confirm warranty coverage for the damaged units and call the customer back",
+        he: "להחליף את המדפסת המתה, לאשר כיסוי אחריות לפגומות ולחזור טלפונית ללקוח"
+      },
+      deadline_text: "Not found",
+      deadline_date: null,
+      urgency: "High",
+      department: "Support",
+      amount: null,
+      confidence: "Medium",
+      status: "needs_review",
+      review_reason: {
+        en: "Urgency is High but no deadline appears in the document",
+        he: "הדחיפות גבוהה אבל אין במסמך תאריך יעד"
+      },
+      assigned_to: "p1",
+      matched_rule: "r4",
+      task_id: "t3"
+    },
+    {
+      id: "d4",
+      channel: "drive",
+      source_ref: "1aBcD-drive-file-id-004",
+      file_name: "4-quotation-alonstudio.txt",
+      file_link: "https://drive.google.com/file/d/1aBcD-drive-file-id-004/view",
+      received_at: "2026-08-01T08:30:00Z",
+      document_type: "quote",
+      sender_or_company: "Alon Studio Print & Signage",
+      summary: {
+        en: "Quotation Q-2026-1188 for banners, foam board signs and brochures. Total 6,307.10 ILS including VAT. Lead time is five working days after written approval.",
+        he: "הצעת מחיר Q-2026-1188 עבור באנרים, שלטי קפיץ וחוברות. סך הכל 6,307.10 ש\"ח כולל מע\"מ. זמן אספקה חמישה ימי עסקים מהאישור בכתב."
+      },
+      requested_action: {
+        en: "Decide whether to approve the quotation and return a signed approval",
+        he: "להחליט אם לאשר את ההצעה ולהחזיר אישור חתום"
+      },
+      deadline_text: "Valid for 7 days from the date of issue",
+      deadline_date: null,
+      urgency: "Medium",
+      department: "Finance",
+      amount: 6307.1,
+      confidence: "High",
+      status: "processed",
+      review_reason: null,
+      assigned_to: "p2",
+      matched_rule: "r3",
+      task_id: "t4"
+    },
+    {
+      id: "d5",
+      channel: "drive",
+      source_ref: "1aBcD-drive-file-id-005",
+      file_name: "5-internal-report-july.txt",
+      file_link: "https://drive.google.com/file/d/1aBcD-drive-file-id-005/view",
+      received_at: "2026-08-02T07:05:00Z",
+      document_type: "report",
+      sender_or_company: "Operations",
+      summary: {
+        en: "July summary: 38 new enrolments against 31 in June, 214 support messages, spending 4% under budget. Circulated for information only.",
+        he: "סיכום יולי: 38 נרשמים חדשים מול 31 ביוני, 214 פניות לתמיכה, והוצאות נמוכות ב־4% מהתקציב. מופץ לידיעה בלבד."
+      },
+      requested_action: "No action found",
+      deadline_text: "Not found",
+      deadline_date: null,
+      urgency: "Low",
+      department: "Management",
+      amount: null,
+      confidence: "High",
+      status: "processed",
+      review_reason: null,
+      assigned_to: "p1",
+      matched_rule: "r8",
+      task_id: null
+    },
+    {
+      id: "d6",
+      channel: "drive",
+      source_ref: "1aBcD-drive-file-id-006",
+      file_name: "6-unclear-scan-note.txt",
+      file_link: "https://drive.google.com/file/d/1aBcD-drive-file-id-006/view",
+      received_at: "2026-08-02T11:34:00Z",
+      document_type: "other",
+      sender_or_company: "Not found",
+      summary: {
+        en: "A partial scan. Figures are illegible, the list of items is cut off and the page is unsigned. The subject cannot be determined from this page alone.",
+        he: "סריקה חלקית. המספרים אינם קריאים, רשימת הפריטים קטועה והדף אינו חתום. לא ניתן לקבוע במה מדובר מהד׳ הזה לבד."
+      },
+      requested_action: "No action found",
+      deadline_text: "Not found",
+      deadline_date: null,
+      urgency: "Medium",
+      department: "General",
+      amount: null,
+      confidence: "Low",
+      status: "needs_review",
+      review_reason: {
+        en: "Model confidence is Low; document type is other; 3 fields returned Not found",
+        he: "רמת הביטחון נמוכה; סוג המסמך אחר; שלושה שדות חזרו ריקים"
+      },
+      assigned_to: "p5",
+      matched_rule: "r9",
+      task_id: "t5"
+    }
+  ];
+
+  /* ----------------------------------------------------------------- tasks */
+  /* Same columns as the existing DailyTask AI table, plus the two nullable
+   * columns this project adds: document_id and assigned_to. */
+
+  var tasks = [
+    {
+      id: "t1",
+      title: { en: "Pay invoice NW-2026-0417", he: "לשלם את חשבונית NW-2026-0417" },
+      description: {
+        en: "Nordwind Supplies, 4,153.60 ILS. Send the transfer confirmation to billing@nordwind-supplies.com.",
+        he: "Nordwind Supplies, 4,153.60 ש\"ח. לשלוח אישור העברה ל־ billing@nordwind-supplies.com."
+      },
+      owner: "yael", status: "working", due_date: "2026-08-04", priority: "urgent",
+      ai_summary: {
+        en: "Payment is due tomorrow and a late fee applies after that.",
+        he: "התשלום למחר, ואחריו נוסף קנס פיגורים."
+      },
+      document_id: "d1", assigned_to: "p2"
+    },
+    {
+      id: "t2",
+      title: { en: "Reply to BrightPath Tech enquiry", he: "להשיב לפניית BrightPath Tech" },
+      description: {
+        en: "Six participants. Send group pricing, company invoicing terms and autumn cohort dates.",
+        he: "שישה משתתפים. לשלוח מחיר קבוצתי, תנאי חיוב לחברה ומועדי מחזור הסתיו."
+      },
+      owner: "avi", status: "todo", due_date: "2026-08-05", priority: "high",
+      ai_summary: {
+        en: "They are comparing two programmes, so a slow reply loses the deal.",
+        he: "הם משווים בין שני מסלולים, אז תשובה איטית מפסידה את העסקה."
+      },
+      document_id: "d2", assigned_to: "p4"
+    },
+    {
+      id: "t3",
+      title: { en: "Resolve the Margolin printer complaint", he: "לטפל בתלונת המדפסות של מרגולין" },
+      description: {
+        en: "Replace the dead unit, confirm warranty on the two damaged ones, and call the customer back.",
+        he: "להחליף את היחידה המתה, לאשר אחריות על השתיים הפגומות, ולחזור ללקוח."
+      },
+      owner: "dana", status: "stuck", due_date: null, priority: "urgent",
+      ai_summary: {
+        en: "Third failed order for a six-year customer. No deadline was given.",
+        he: "ההזמנה השלישית שנכשלת ללקוח ותיק שש שנים. לא ניתן תאריך יעד."
+      },
+      document_id: "d3", assigned_to: "p1"
+    },
+    {
+      id: "t4",
+      title: { en: "Decide on the Alon Studio quotation", he: "להחליט על הצעת המחיר של סטודיו אלון" },
+      description: {
+        en: "6,307.10 ILS for banners, signs and brochures. The quote expires seven days after 2026-08-01.",
+        he: "6,307.10 ש\"ח עבור באנרים, שלטים וחוברות. ההצעה פגה שבעה ימים אחרי 2026-08-01."
+      },
+      owner: "yael", status: "todo", due_date: "2026-08-08", priority: "medium",
+      ai_summary: {
+        en: "The price is only held for a week, so the decision cannot wait.",
+        he: "המחיר נשמר שבוע בלבד, אז ההחלטה לא יכולה לחכות."
+      },
+      document_id: "d4", assigned_to: "p2"
+    },
+    {
+      id: "t5",
+      title: { en: "Identify the unreadable scan", he: "לזהות את הסריקה הלא קריאה" },
+      description: {
+        en: "Partial scan with illegible figures and no signature. Find the original before filing.",
+        he: "סריקה חלקית עם מספרים לא קריאים וללא חתימה. למצוא את המקור לפני תיוק."
+      },
+      owner: "noa", status: "todo", due_date: null, priority: "low",
+      ai_summary: {
+        en: "Nothing could be extracted reliably. A person has to look at the source.",
+        he: "לא היה ניתן לחלץ שום דבר באמינות. צריך שאדם יסתכל על המקור."
+      },
+      document_id: "d6", assigned_to: "p5"
+    }
+  ];
+
+  /* --------------------------------------------------------- notifications */
+
+  var notifications = [
+    { id: "n1", document_id: "d1", kind: "urgent", to_email: "autorderart+yael@gmail.com", sent_at: "2026-08-03T09:14:22Z", ok: true },
+    { id: "n2", document_id: "d2", kind: "normal", to_email: "autorderart@gmail.com",      sent_at: "2026-07-30T13:02:31Z", ok: true },
+    { id: "n3", document_id: "d3", kind: "urgent", to_email: "autorderart+dana@gmail.com", sent_at: "2026-07-31T16:47:12Z", ok: true },
+    { id: "n4", document_id: "d4", kind: "normal", to_email: "autorderart+yael@gmail.com", sent_at: "2026-08-01T08:30:19Z", ok: true },
+    { id: "n5", document_id: "d5", kind: "normal", to_email: "autorderart+dana@gmail.com", sent_at: "2026-08-02T07:05:08Z", ok: true },
+    { id: "n6", document_id: "d6", kind: "normal", to_email: "autorderart+noa@gmail.com",  sent_at: "2026-08-02T11:34:44Z", ok: true }
+  ];
+
+  return {
+    DEPARTMENTS: DEPARTMENTS, DOC_TYPES: DOC_TYPES, URGENCIES: URGENCIES,
+    CHANNELS: CHANNELS, STATUSES: STATUSES,
+    people: people, routing_rules: routing_rules, documents: documents,
+    tasks: tasks, notifications: notifications
+  };
+})();
+</script>
+<script>
+/* ---- core.js ---- */
+/* Office Hub - core: language, theme, data layer, business logic.
+ * Screen renderers live in screens.js. */
+
+"use strict";
+
+/* ============================================================ i18n ====== */
+
+var T = {
+  en: {
+    tagline: "Document routing and work queue",
+    srcMock: "Mock data", srcLive: "Connected to Supabase",
+
+    navFlow: "Flow", navInbox: "Inbox", navReview: "Needs review", navTasks: "Tasks",
+    navEmails: "Emails", navPeople: "People", navRules: "Rules", navDash: "Dashboard",
+
+    /* enum labels */
+    drive: "Drive", form: "Form", gmail: "Gmail",
+    invoice: "Invoice", request: "Request", report: "Report", complaint: "Complaint",
+    contract: "Contract", quote: "Quote", lead: "Lead", other: "Other",
+    Low: "Low", Medium: "Medium", High: "High",
+    Sales: "Sales", Finance: "Finance", Support: "Support", HR: "HR",
+    Management: "Management", General: "General",
+    processed: "Processed", needs_review: "Needs review",
+    todo: "To do", working: "Working", done: "Done", stuck: "Stuck",
+    low: "Low", medium: "Medium", high: "High", urgent: "Urgent",
+    notFound: "Not found", noAction: "No action found",
+
+    anyChannel: "Any channel", anyDept: "Any department", anyUrgency: "Any urgency",
+    anyStatus: "Any status", anyType: "Any type", anyone: "Anyone", clear: "Clear", any: "any",
+
+    /* flow */
+    flowH: "Flow",
+    flowSub: "One item, every stage, real values. Each card names the n8n node that performs it. This screen is the build specification for the workflow, and the place to disagree before anything is wired.",
+    st1drive: "Google Drive Trigger", st1form: "Webhook", st1gmail: "Gmail Trigger",
+    whatFired: "What fired it", sourceRef: "Source ref", received: "Received",
+    firedDrive: "A new file appeared in Incoming Documents",
+    firedForm: "The website form posted to the webhook URL",
+    firedGmail: "A new message matched the Gmail query",
+    st2drive: "Download + Extract From File", st2other: "Read the payload",
+    st2driveB: "The file is downloaded by id and converted from PDF, DOCX or TXT into plain text.",
+    st2otherB: "The incoming fields are joined into one block of plain text.",
+    st3: "Set - Normalize",
+    st3note: "From here on nothing knows which channel it came from.",
+    theBody: "the document body", emptyVal: "empty",
+    st4: "Information Extractor + AI Chat Model",
+    st5: "Set - Derive status", tripped: "TRIPPED",
+    st6: "Supabase - Insert documents",
+    st6b: "One row, keyed on (channel, source_ref) so a trigger that fires twice cannot create a duplicate.",
+    st7: "Get rules - Filter - Limit 1 - Get person",
+    match: "match", goesTo: "Goes to", noRule: "No rule matched.",
+    awayNote: "{a} is away until {b}, so the backup receives it",
+    st8: "Supabase - Insert tasks",
+    st8skip: "Skipped. requested_action is No action found, so there is nothing to open.",
+    st9: "Google Sheets - Append Row",
+    st9b: "The audit log the brief asks for. Supabase runs the office; the sheet is the evidence.",
+    st10: "IF urgency = High - Gmail",
+    tookBranch: "Took the {k} branch - urgency is {u}.",
+    seeEmail: "See the email",
+    st11: "Google Drive - Move File",
+    st11b: "Moved to Processed Documents, so the folder empties and nothing is processed twice.",
+    st11skip: "Skipped. This item did not arrive as a file, so there is nothing to move.",
+
+    /* inbox */
+    inboxSub: "Everything that entered the office, from any channel, with the fields the model returned. Click a row to see the full extraction.",
+    cReceived: "Received", cFile: "File", cType: "Type", cSender: "Sender / company",
+    cDept: "Dept", cUrgency: "Urgency", cDeadline: "Deadline", cAssigned: "Assigned",
+    cStatus: "Status", ofTotal: "{a} of {b}",
+    noMatch: "No documents match these filters.",
+
+    /* review */
+    reviewSub: "The queue exists so that nothing the model was unsure about disappears quietly. These items were still stored, routed and notified - they are simply flagged.",
+    fourRules: "The four rules",
+    rule1: "confidence = Low",
+    rule2: "three or more fields returned Not found",
+    rule3: "document_type = other",
+    rule4: "urgency = High but deadline = Not found",
+    approve: "Approve as is", openFull: "Open full record",
+    nothingWaiting: "Nothing is waiting for review.",
+    notWired: "Wired in phase 6: marks the document processed.",
+    fieldsMissing: "{n} field(s) missing", confIs: "confidence is {c}", typeIs: "type is {t}",
+
+    /* tasks */
+    tasksSub: "The same tasks table that DailyTask AI reads, grouped by owner. Every task here was created by the router from a document - that is the loop closing.",
+    cTask: "Task", cPriority: "Priority", cDue: "Due", cFrom: "From document", noDate: "no date",
+
+    /* emails */
+    emailsSub: "The two templates the brief requires, rendered with real values. The urgent branch fires when urgency is High; everything else takes the normal branch. Both carry the same business fields so the recipient never has to open the original first.",
+    urgent: "urgent", normal: "normal", branch: "{k} branch",
+    to: "To", subject: "Subject",
+    sentSoFar: "Sent so far",
+    sentSub: "One row per notification, so “an email went out” is a fact in the database and not an assumption.",
+    cSent: "Sent", cBranch: "Branch", cTo: "To", cSubject: "Subject",
+
+    mUrgentOpen: "A new urgent document was processed and assigned to you.",
+    mNormalOpen: "A new document was processed successfully.",
+    mFile: "File", mSender: "Sender", mType: "Type", mDept: "Department",
+    mUrgency: "Urgency", mDeadline: "Deadline", mAmount: "Amount",
+    mSummary: "Summary", mAction: "Requested action", mLink: "File in Drive",
+    mReview: "NEEDS REVIEW", mReviewNote: "Please check the original before acting on this summary.",
+    mNoAction: "No action is required. This is for information only.",
+    subjUrgent: "URGENT: {t} from {s}", subjNormal: "Document processed: {f}",
+
+    /* people */
+    peopleSub: "This table is what feeds the routing. The model never picks a person - it classifies, and these rows decide. When someone is away their backup receives the work automatically.",
+    cName: "Name", cRole: "Role", cEmail: "Email", cAvail: "Availability",
+    cBackup: "Backup", cOpen: "Open tasks",
+    available: "Available", awayUntil: "Away until {d}",
+
+    /* rules */
+    rulesSub: "Rules are rows, not a prompt. A blank cell means “do not care”. They are evaluated by rank, lowest first, and the first rule that matches wins. Rank 99 is the insurance policy.",
+    cRank: "Rank", cRule: "Rule", cChannel: "Channel", cAmount: "Amount", cAssign: "Assign to",
+    simulator: "Simulator",
+    simSub: "Pick a classification and see who would receive it - no file upload, no waiting. This runs the exact matching logic the n8n nodes will run.",
+    amountPh: "amount", ruleLbl: "Rule", why: "Why",
+    noRuleWarn: "No rule matched. Add a catch-all rule - without one an item can arrive with no owner.",
+    noAmount: "no amount in the document", amountIs: "amount is {a}",
+    channelIs: "channel is {c}", deptIs: "department is {d}", urgIs: "urgency is {u}",
+
+    /* dashboard */
+    dashSub: "The numbers the minimum success criteria ask for, plus the load each person is actually carrying.",
+    mDocs: "documents processed", mUrgentB: "urgent, took the urgent branch",
+    mWaiting: "waiting for a person", mOpenTasks: "open tasks created",
+    byDept: "By department", byChannel: "By channel", workload: "Workload",
+    cDocs: "Documents", cPerson: "Person", cUrgentN: "Urgent",
+
+    /* sheet */
+    secIntake: "Intake", secModel: "What the model returned", secStatus: "Status",
+    secRouting: "Routing", secResult: "Result",
+    fType: "Type", fSender: "Sender", fSummary: "Summary", fAction: "Action",
+    fDeadline: "Deadline", fUrgency: "Urgency", fDept: "Department",
+    fAmount: "Amount", fConfidence: "Confidence",
+    normalised: "normalised {d}", notNormalisable: "not normalisable",
+    openDrive: "Open in Drive", matchedRule: "Matched rule", assignedTo: "Assigned to",
+    none: "none", noneCreated: "none created", nothingSent: "nothing sent",
+    notified: "Notified", taskW: "Task"
+  },
+
+  he: {
+    tagline: "ניתוב מסמכים ותור עבודה",
+    srcMock: "נתוני הדגמה", srcLive: "מחובר ל‑Supabase",
+
+    navFlow: "זרימה", navInbox: "תיבה", navReview: "דורש בדיקה", navTasks: "משימות",
+    navEmails: "מיילים", navPeople: "אנשים", navRules: "כללים", navDash: "לוח בקרה",
+
+    drive: "דרייב", form: "טופס", gmail: "ג׳ימייל",
+    invoice: "חשבונית", request: "בקשה", report: "דוח", complaint: "תלונה",
+    contract: "חוזה", quote: "הצעת מחיר", lead: "ליד", other: "אחר",
+    Low: "נמוכה", Medium: "בינונית", High: "גבוהה",
+    Sales: "מכירות", Finance: "כספים", Support: "תמיכה", HR: "משאבי אנוש",
+    Management: "הנהלה", General: "כללי",
+    processed: "עובד", needs_review: "דורש בדיקה",
+    todo: "לביצוע", working: "בעבודה", done: "הושלם", stuck: "תקוע",
+    low: "נמוכה", medium: "בינונית", high: "גבוהה", urgent: "דחופה",
+    notFound: "לא נמצא", noAction: "לא נדרשת פעולה",
+
+    anyChannel: "כל הערוצים", anyDept: "כל המחלקות", anyUrgency: "כל הדחיפויות",
+    anyStatus: "כל הסטטוסים", anyType: "כל הסוגים", anyone: "כל אחד", clear: "ניקוי", any: "הכל",
+
+    flowH: "זרימה",
+    flowSub: "פריט אחד, כל התחנות, ערכים אמיתיים. כל כרטיס נושא את שם הצומת ב‑n8n שמבצע אותו. המסך הזה הוא מפרט הבנייה של התהליך, והמקום לחלוק עליו לפני שמחווטים משהו.",
+    st1drive: "טריגר Google Drive", st1form: "וובהוק", st1gmail: "טריגר Gmail",
+    whatFired: "מה הפעיל", sourceRef: "מזהה מקור", received: "התקבל",
+    firedDrive: "קובץ חדש הופיע בתיקיית Incoming Documents",
+    firedForm: "הטופס באתר שלח POST לכתובת הוובהוק",
+    firedGmail: "הודעה חדשה תאמה לשאילתת Gmail",
+    st2drive: "הורדה + חילוץ טקסט מהקובץ", st2other: "קריאת התוכן",
+    st2driveB: "הקובץ יורד לפי מזהה ומומר מ‑PDF, DOCX או TXT לטקסט פשוט.",
+    st2otherB: "השדות הנכנסים מאוחדים לגוש טקסט אחד.",
+    st3: "Set ‑ נורמליזציה",
+    st3note: "מכאן ואילך שום דבר לא יודע מאיזה ערוץ זה הגיע.",
+    theBody: "גוף המסמך", emptyVal: "ריק",
+    st4: "Information Extractor + מודל שפה",
+    st5: "Set ‑ גזירת סטטוס", tripped: "נדלק",
+    st6: "Supabase ‑ הוספת שורה ל‑documents",
+    st6b: "שורה אחת, עם מפתח ייחודי על (channel, source_ref), כך שטריגר שיורה פעמיים לא יוצר כפילות.",
+    st7: "שליפת כללים ‑ סינון ‑ הראשון ‑ שליפת האדם",
+    match: "התאמה", goesTo: "מגיע אל", noRule: "אף כלל לא התאים.",
+    awayNote: "{a} בחופשה עד {b}, ולכן המחליף מקבל את זה",
+    st8: "Supabase ‑ הוספת שורה ל‑tasks",
+    st8skip: "דולג. השדה requested_action הוא ״לא נדרשת פעולה״, אז אין מה לפתוח.",
+    st9: "Google Sheets ‑ הוספת שורה",
+    st9b: "יומן הביקורת שהבריף דורש. Supabase מנהל את המשרד; הגיליון הוא ההוכחה.",
+    st10: "IF דחיפות = גבוהה ‑ Gmail",
+    tookBranch: "עבר בענף ה{k} ‑ הדחיפות היא {u}.",
+    seeEmail: "לראות את המייל",
+    st11: "Google Drive ‑ העברת הקובץ",
+    st11b: "הועבר ל‑Processed Documents, כך שהתיקייה מתרוקנת ושום דבר לא מעובד פעמיים.",
+    st11skip: "דולג. הפריט הזה לא הגיע כקובץ, אז אין מה להעביר.",
+
+    inboxSub: "כל מה שנכנס למשרד, מכל ערוץ, עם השדות שהמודל החזיר. לחיצה על שורה פותחת את החילוץ המלא.",
+    cReceived: "התקבל", cFile: "קובץ", cType: "סוג", cSender: "שולח / חברה",
+    cDept: "מחלקה", cUrgency: "דחיפות", cDeadline: "תאריך יעד", cAssigned: "אחראי",
+    cStatus: "סטטוס", ofTotal: "{a} מתוך {b}",
+    noMatch: "אין מסמכים שתואמים לסינון הזה.",
+
+    reviewSub: "התור הזה קיים כדי ששום דבר שהמודל לא היה בטוח בו לא ייעלם בשקט. הפריטים האלה עדיין נשמרו, נותבו ונשלחה עליהם התראה ‑ הם פשוט מסומנים.",
+    fourRules: "ארבעת הכללים",
+    rule1: "רמת ביטחון נמוכה",
+    rule2: "שלושה שדות או יותר חזרו ריקים",
+    rule3: "סוג המסמך הוא ״אחר״",
+    rule4: "דחיפות גבוהה אבל אין תאריך יעד",
+    approve: "לאשר כמו שזה", openFull: "לפתוח את הרשומה המלאה",
+    nothingWaiting: "שום דבר לא ממתין לבדיקה.",
+    notWired: "יחווט בשלב 6: מסמן את המסמך כמעובד.",
+    fieldsMissing: "{n} שדות חסרים", confIs: "הביטחון {c}", typeIs: "הסוג {t}",
+
+    tasksSub: "אותה טבלת tasks ש‑DailyTask AI קורא, מקובצת לפי אחראי. כל משימה כאן נוצרה על ידי הנתב מתוך מסמך ‑ זהו המעגל שנסגר.",
+    cTask: "משימה", cPriority: "עדיפות", cDue: "יעד", cFrom: "מהמסמך", noDate: "ללא תאריך",
+
+    emailsSub: "שתי התבניות שהבריף דורש, מוצגות עם ערכים אמיתיים. הענף הדחוף נדלק כשהדחיפות גבוהה; כל השאר עובר בענף הרגיל. שניהם נושאים את אותם שדות עסקיים, כך שהנמען אף פעם לא צריך לפתוח קודם את המסמך המקורי.",
+    urgent: "דחוף", normal: "רגיל", branch: "ענף {k}",
+    to: "אל", subject: "נושא",
+    sentSoFar: "מה נשלח עד כה",
+    sentSub: "שורה אחת לכל התראה, כך ש״נשלח מייל״ הוא עובדה במסד הנתונים ולא הנחה.",
+    cSent: "נשלח", cBranch: "ענף", cTo: "אל", cSubject: "נושא",
+
+    mUrgentOpen: "מסמך דחוף חדש עובד והוקצה אליך.",
+    mNormalOpen: "מסמך חדש עובד בהצלחה.",
+    mFile: "קובץ", mSender: "שולח", mType: "סוג", mDept: "מחלקה",
+    mUrgency: "דחיפות", mDeadline: "תאריך יעד", mAmount: "סכום",
+    mSummary: "תקציר", mAction: "הפעולה הנדרשת", mLink: "הקובץ בדרייב",
+    mReview: "דורש בדיקה", mReviewNote: "נא לבדוק את המסמך המקורי לפני פעולה על סמך התקציר.",
+    mNoAction: "לא נדרשת פעולה. זה לידיעה בלבד.",
+    subjUrgent: "דחוף: {t} מאת {s}", subjNormal: "מסמך עובד: {f}",
+
+    peopleSub: "הטבלה הזו היא מה שמזין את הניתוב. המודל אף פעם לא בוחר אדם ‑ הוא מסווג, והשורות האלה מחליטות. כשמישהו בחופשה, המחליף מקבל את העבודה אוטומטית.",
+    cName: "שם", cRole: "תפקיד", cEmail: "מייל", cAvail: "זמינות",
+    cBackup: "מחליף", cOpen: "משימות פתוחות",
+    available: "זמין", awayUntil: "בחופשה עד {d}",
+
+    rulesSub: "הכללים הם שורות, לא פרומפט. תא ריק פירושו ״לא אכפת לי״. הם נבדקים לפי דירוג, מהנמוך לגבוה, והכלל הראשון שמתאים מנצח. דירוג 99 הוא פוליסת הביטוח.",
+    cRank: "דירוג", cRule: "כלל", cChannel: "ערוץ", cAmount: "סכום", cAssign: "מגיע אל",
+    simulator: "סימולטור",
+    simSub: "בוחרים סיווג ורואים מי היה מקבל אותו ‑ בלי להעלות קובץ ובלי לחכות. זה מריץ בדיוק את לוגיקת ההתאמה שצמתי ה‑n8n יריצו.",
+    amountPh: "סכום", ruleLbl: "כלל", why: "למה",
+    noRuleWarn: "אף כלל לא התאים. צריך להוסיף כלל תפס־הכל ‑ בלעדיו פריט יכול להגיע בלי אחראי.",
+    noAmount: "אין סכום במסמך", amountIs: "הסכום {a}",
+    channelIs: "הערוץ {c}", deptIs: "המחלקה {d}", urgIs: "הדחיפות {u}",
+
+    dashSub: "המספרים שקריטריוני ההצלחה דורשים, ולצידם העומס שכל אדם באמת נושא.",
+    mDocs: "מסמכים עובדו", mUrgentB: "דחופים, עברו בענף הדחוף",
+    mWaiting: "ממתינים לאדם", mOpenTasks: "משימות פתוחות נוצרו",
+    byDept: "לפי מחלקה", byChannel: "לפי ערוץ", workload: "עומס עבודה",
+    cDocs: "מסמכים", cPerson: "אדם", cUrgentN: "דחופות",
+
+    secIntake: "קליטה", secModel: "מה המודל החזיר", secStatus: "סטטוס",
+    secRouting: "ניתוב", secResult: "תוצאה",
+    fType: "סוג", fSender: "שולח", fSummary: "תקציר", fAction: "פעולה",
+    fDeadline: "תאריך יעד", fUrgency: "דחיפות", fDept: "מחלקה",
+    fAmount: "סכום", fConfidence: "רמת ביטחון",
+    normalised: "מנורמל {d}", notNormalisable: "לא ניתן לנרמול",
+    openDrive: "לפתוח בדרייב", matchedRule: "הכלל שהתאים", assignedTo: "הוקצה אל",
+    none: "אין", noneCreated: "לא נוצרה", nothingSent: "לא נשלח דבר",
+    notified: "התראה", taskW: "משימה"
+  }
+};
+
+var LANG = "en";
+
+function t(k, vars){
+  var s = (T[LANG] && T[LANG][k]) || T.en[k] || k;
+  if (vars) for (var v in vars) s = s.split("{" + v + "}").join(vars[v]);
+  return s;
+}
+function isRTL(){ return LANG === "he"; }
+
+/* Resolve a possibly-bilingual field to the current language. */
+function val(f){
+  if (f && typeof f === "object") return f[LANG] || f.en || "";
+  return f == null ? "" : f;
+}
+/* Sentinels the model emits are translated; real quoted text is not. */
+function sent(v){
+  if (v === "Not found") return t("notFound");
+  if (v === "No action found") return t("noAction");
+  return val(v);
+}
+
+/* ==================================================== storage + chrome == */
+
+var store = {
+  get: function(k, d){ try { var v = localStorage.getItem(k); return v === null ? d : v; } catch(e){ return d; } },
+  set: function(k, v){ try { localStorage.setItem(k, v); } catch(e){} }
+};
+
+function setLang(l){
+  LANG = l;
+  document.documentElement.lang = l;
+  document.documentElement.dir = (l === "he") ? "rtl" : "ltr";
+  store.set("oh.lang", l);
+  var bs = document.querySelectorAll("#langSeg button");
+  for (var i=0;i<bs.length;i++) bs[i].setAttribute("aria-pressed", String(bs[i].dataset.lang === l));
+  document.getElementById("tagline").textContent = t("tagline");
+  document.getElementById("srcPill").textContent = t(db.kind === "mock" ? "srcMock" : "srcLive");
+  closeSheet();
+  render();
+}
+
+function setTheme(mode){
+  if (mode) document.documentElement.setAttribute("data-theme", mode);
+  else document.documentElement.removeAttribute("data-theme");
+  store.set("oh.theme", mode || "");
+  var bs = document.querySelectorAll("#themeSeg button");
+  for (var i=0;i<bs.length;i++) bs[i].setAttribute("aria-pressed", String(bs[i].dataset.theme === mode));
+}
+
+/* ======================================================== data layer ==== */
+/* Everything reads through db.*. A Supabase implementation would expose the
+ * same five methods and no screen would change. */
+
+var D = window.OFFICE_HUB_DATA;
+
+var mockDb = {
+  kind: "mock",
+  people:        function(){ return D.people.slice(); },
+  routingRules:  function(){ return D.routing_rules.slice().sort(function(a,b){ return a.rank - b.rank; }); },
+  documents:     function(){ return D.documents.slice().sort(function(a,b){ return a.received_at < b.received_at ? 1 : -1; }); },
+  tasks:         function(){ return D.tasks.slice(); },
+  notifications: function(){ return D.notifications.slice(); }
+};
+
+var db = mockDb;
+
+/* ==================================================== business logic ==== */
+/* These functions are the specification for what n8n must do. They live here
+ * so the behaviour can be seen and tested on screen before a node is wired. */
+
+function matchRule(rules, f){
+  for (var i=0;i<rules.length;i++){
+    var r = rules[i];
+    if (!r.is_active) continue;
+    if (r.match_channel    != null && r.match_channel    !== f.channel)       continue;
+    if (r.match_doc_type   != null && r.match_doc_type   !== f.document_type) continue;
+    if (r.match_department != null && r.match_department !== f.department)    continue;
+    if (r.match_urgency    != null && r.match_urgency    !== f.urgency)       continue;
+    if (r.min_amount       != null && !(f.amount != null && f.amount >= r.min_amount)) continue;
+    return r;
+  }
+  return null;
+}
+
+/* Same evaluation as matchRule, but it records why each earlier rule lost. */
+function routeTrace(rules, f){
+  var out = [];
+  for (var i=0;i<rules.length;i++){
+    var r = rules[i], why = null;
+    if (!r.is_active) why = "inactive";
+    else if (r.match_channel    != null && r.match_channel    !== f.channel)       why = t("channelIs", {c:t(f.channel)});
+    else if (r.match_doc_type   != null && r.match_doc_type   !== f.document_type) why = t("typeIs",    {t:t(f.document_type)});
+    else if (r.match_department != null && r.match_department !== f.department)    why = t("deptIs",    {d:t(f.department)});
+    else if (r.match_urgency    != null && r.match_urgency    !== f.urgency)       why = t("urgIs",     {u:t(f.urgency)});
+    else if (r.min_amount       != null && !(f.amount != null && f.amount >= r.min_amount))
+      why = (f.amount == null) ? t("noAmount") : t("amountIs", {a:money(f.amount)});
+    out.push({ rule:r, matched:!why, why:why });
+    if (!why) break;
+  }
+  return out;
+}
+
+/* A person who is away hands the item to their backup. */
+function resolvePerson(personId, todayStr){
+  var p = byId(db.people(), personId);
+  if (!p) return null;
+  if (p.away_until && p.away_until >= todayStr){
+    var b = byId(db.people(), p.backup_person);
+    if (b) return { person:b, viaBackup:p };
+  }
+  return { person:p, viaBackup:null };
+}
+
+/* The four review rules. Any one of them alone is enough. */
+function checkDetail(d){
+  var missing = 0;
+  if (d.sender_or_company === "Not found")       missing++;
+  if (d.requested_action  === "No action found") missing++;
+  if (d.deadline_text     === "Not found")       missing++;
+  if (!d.summary)                                missing++;
+  return [
+    { label:t("rule1"), hit:d.confidence === "Low",      got:t("confIs", {c:t(d.confidence)}) },
+    { label:t("rule2"), hit:missing >= 3,                got:t("fieldsMissing", {n:missing}) },
+    { label:t("rule3"), hit:d.document_type === "other", got:t("typeIs", {t:t(d.document_type)}) },
+    { label:t("rule4"), hit:d.urgency === "High" && d.deadline_text === "Not found",
+      got:t(d.urgency) + " / " + sent(d.deadline_text) }
+  ];
+}
+function deriveStatus(d){
+  var c = checkDetail(d);
+  for (var i=0;i<c.length;i++) if (c[i].hit) return "needs_review";
+  return "processed";
+}
+
+function emailFor(d){
+  var r = resolvePerson(d.assigned_to, today());
+  var isUrgent = d.urgency === "High";
+  var subject = isUrgent
+    ? t("subjUrgent", { t:t(d.document_type), s:ltr(val(d.sender_or_company)) })
+    : t("subjNormal", { f:ltr(d.file_name) });
+  var body =
+      (isUrgent ? t("mUrgentOpen") : t("mNormalOpen")) + "\n\n"
+    + t("mFile")     + ": " + ltr(d.file_name) + "\n"
+    + t("mSender")   + ": " + ltr(sent(d.sender_or_company)) + "\n"
+    + t("mType")     + ": " + t(d.document_type) + "\n"
+    + t("mDept")     + ": " + t(d.department) + "\n"
+    + t("mUrgency")  + ": " + t(d.urgency) + "\n"
+    + t("mDeadline") + ": " + sent(d.deadline_text) + "\n"
+    + (d.amount != null ? t("mAmount") + ": " + money(d.amount) + "\n" : "")
+    + "\n" + t("mSummary") + "\n" + val(d.summary) + "\n"
+    + "\n" + t("mAction")  + "\n" + sent(d.requested_action) + "\n"
+    + (d.file_link ? "\n" + t("mLink") + "\n" + d.file_link + "\n" : "")
+    + (d.status === "needs_review"
+        ? "\n" + t("mReview") + "\n" + val(d.review_reason) + "\n" + t("mReviewNote") + "\n"
+        : (d.requested_action === "No action found" ? "\n" + t("mNoAction") + "\n" : ""));
+  return { kind:isUrgent ? "urgent" : "normal", to:r ? r.person.email : "",
+           subject:subject, body:body, person:r ? r.person : null };
+}
+
+/* ============================================================ helpers === */
+
+function byId(arr, id){ for (var i=0;i<arr.length;i++) if (arr[i].id === id) return arr[i]; return null; }
+function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){
+  return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+function today(){ return new Date().toISOString().slice(0,10); }
+function fmtDate(s){ return s ? s.slice(0,10) : ""; }
+function fmtWhen(s){ return s ? s.slice(0,10) + " " + s.slice(11,16) : ""; }
+function money(n){ return n == null ? "" :
+  Number(n).toLocaleString("en-US", {minimumFractionDigits:2, maximumFractionDigits:2}); }
+function personName(id){ var p = byId(db.people(), id); return p ? val(p.full_name) : "—"; }
+
+/* A latin string dropped into a Hebrew sentence gets reordered by the bidi
+ * algorithm: "1-invoice.txt" renders as "invoice.txt-1". Wrapping it in an
+ * isolate pins its internal direction without affecting the sentence. These
+ * are plain characters, so this also works inside <option>, where markup
+ * and dir attributes are unreliable. */
+function ltr(s){ return isRTL() ? "⁦" + String(s == null ? "" : s) + "⁩" : s; }
+
+function opts(list, sel, anyKey){
+  var h = '<option value="">' + esc(t(anyKey)) + '</option>';
+  for (var i=0;i<list.length;i++){
+    h += '<option value="' + esc(list[i]) + '"' + (list[i] === sel ? ' selected' : '') + '>'
+       + esc(t(list[i])) + '</option>';
+  }
+  return h;
+}
+function urgPill(u){
+  return '<span class="pill ' + (u === "High" ? "p-hi" : u === "Medium" ? "p-me" : "p-lo") + '">'
+       + esc(t(u) || "—") + '</span>';
+}
+function statusPill(s){
+  return '<span class="pill ' + (s === "needs_review" ? "p-rev" : "p-ok") + '">' + esc(t(s)) + '</span>';
+}
+function priPill(p){
+  return '<span class="pill ' + (p === "urgent" ? "p-hi" : p === "high" ? "p-me" : "p-lo") + '">'
+       + esc(t(p)) + '</span>';
+}
+function taskPill(s){
+  return '<span class="pill p-' + (s === "working" ? "work" : s === "done" ? "done" : s === "stuck" ? "stuck" : "todo")
+       + '">' + esc(t(s)) + '</span>';
+}
+/* Sentinel values render greyed and italic so a missing field looks missing. */
+function nf(v){
+  var isSent = (v === "Not found" || v === "No action found" || v == null || v === "");
+  if (isSent) return '<span class="notfound">' + esc(sent(v) || "—") + '</span>';
+  var s = val(v);
+  return esc(/[֐-׿]/.test(s) ? s : ltr(s));
+}
+
+/* =============================================================== boot === */
+
+var state = {
+  screen: "flow", filters: {},
+  sim: { channel:"drive", document_type:"invoice", department:"Finance", urgency:"Medium", amount:"" },
+  flowDoc: "d1", mailDoc: "d1"
+};
+
+function go(id){ state.screen = id; state.filters = {}; closeSheet(); render(); window.scrollTo(0,0); }
+function setF(k, v){ state.filters[k] = v; render(); }
+function setSim(k, v){ state.sim[k] = v; render(); }
+function setFlowDoc(id){ state.flowDoc = id; render(); }
+function setMailDoc(id){ state.mailDoc = id; render(); }
+
+function renderTabs(){
+  var h = "";
+  for (var i=0;i<SCREENS.length;i++){
+    var s = SCREENS[i];
+    h += '<button onclick="go(\'' + s.id + '\')" class="' + (state.screen === s.id ? "on" : "") + '">'
+       + esc(t(s.key)) + (s.count ? '<b>' + s.count() + '</b>' : '') + '</button>';
+  }
+  document.getElementById("tabs").innerHTML = h;
+}
+
+function render(){
+  renderTabs();
+  for (var i=0;i<SCREENS.length;i++){
+    if (SCREENS[i].id === state.screen){
+      document.getElementById("view").innerHTML = SCREENS[i].render();
+      return;
+    }
+  }
+}
+
+function closeSheet(){
+  document.getElementById("sheet").classList.remove("on");
+  document.getElementById("scrim").classList.remove("on");
+}
+
+function boot(){
+  document.getElementById("langSeg").addEventListener("click", function(e){
+    var b = e.target.closest("button[data-lang]"); if (b) setLang(b.dataset.lang);
+  });
+  document.getElementById("themeSeg").addEventListener("click", function(e){
+    var b = e.target.closest("button[data-theme]"); if (!b) return;
+    var cur = document.documentElement.getAttribute("data-theme");
+    setTheme(cur === b.dataset.theme ? null : b.dataset.theme);
+  });
+  document.addEventListener("keydown", function(e){ if (e.key === "Escape") closeSheet(); });
+
+  setTheme(store.get("oh.theme", "") || null);
+  setLang(store.get("oh.lang", "en"));
+}
+</script>
+<script>
+/* ---- screens.js ---- */
+/* Office Hub - screen renderers. Core logic and i18n live in core.js. */
+
+"use strict";
+
+var SCREENS = [
+  { id:"flow",   key:"navFlow",   render:function(){ return renderFlow(); },   count:null },
+  { id:"inbox",  key:"navInbox",  render:function(){ return renderInbox(); },
+    count:function(){ return db.documents().length; } },
+  { id:"review", key:"navReview", render:function(){ return renderReview(); },
+    count:function(){ return db.documents().filter(function(d){ return d.status === "needs_review"; }).length; } },
+  { id:"tasks",  key:"navTasks",  render:function(){ return renderTasks(); },
+    count:function(){ return db.tasks().filter(function(t){ return t.status !== "done"; }).length; } },
+  { id:"emails", key:"navEmails", render:function(){ return renderEmails(); },
+    count:function(){ return db.notifications().length; } },
+  { id:"people", key:"navPeople", render:function(){ return renderPeople(); },
+    count:function(){ return db.people().length; } },
+  { id:"rules",  key:"navRules",  render:function(){ return renderRules(); },
+    count:function(){ return db.routingRules().length; } },
+  { id:"dash",   key:"navDash",   render:function(){ return renderDash(); },   count:null }
+];
+
+function head(titleKey, subKey, extra){
+  return '<div class="head"><h2>' + esc(t(titleKey)) + '</h2>'
+       + (extra || "") + '</div><p class="sub">' + esc(t(subKey)) + '</p>';
+}
+function panel(inner){ return '<div class="panelwrap"><div class="tblwrap">' + inner + '</div></div>'; }
+function docPicker(sel, handler){
+  return '<select onchange="' + handler + '(this.value)">' + db.documents().map(function(d){
+    return '<option value="' + d.id + '"' + (d.id === sel ? ' selected' : '') + '>'
+         + esc(ltr(d.file_name)) + '</option>';
+  }).join("") + '</select>';
+}
+
+/* ================================================================ flow == */
+
+function stage(n, node, wf, active, inner){
+  return '<div class="stage' + (active ? " act" : " skip") + '">'
+    + '<div class="stagehd"><span class="stepn">' + n + '</span><b>' + esc(node) + '</b>'
+    + '<span class="wf">' + esc(wf) + '</span></div>' + inner + '</div>';
+}
+function conn(){ return '<div class="conn"></div>'; }
+
+function renderFlow(){
+  var d = byId(db.documents(), state.flowDoc) || db.documents()[0];
+  var rules = db.routingRules();
+  var trace = routeTrace(rules, { channel:d.channel, document_type:d.document_type,
+    department:d.department, urgency:d.urgency, amount:d.amount });
+  var winner = trace[trace.length - 1];
+  var res = winner.matched ? resolvePerson(winner.rule.assign_to, today()) : null;
+  var task = d.task_id ? byId(db.tasks(), d.task_id) : null;
+  var mail = emailFor(d);
+  var isDrive = d.channel === "drive";
+
+  var h = head("flowH", "flowSub")
+    + '<div class="toolbar" style="border-radius:12px;border:1px solid var(--rule);margin-bottom:16px">'
+    + docPicker(d.id, "setFlowDoc")
+    + '<span class="pill">' + esc(t(d.channel)) + '</span>' + statusPill(d.status) + '</div>';
+
+  h += stage(1, t("st1" + d.channel), "WF-" + (isDrive ? "1" : d.channel === "form" ? "2" : "3"), true,
+      '<dl class="kv"><dt>' + esc(t("whatFired")) + '</dt><dd>' + esc(t("fired" + d.channel.charAt(0).toUpperCase() + d.channel.slice(1))) + '</dd>'
+    + '<dt>' + esc(t("sourceRef")) + '</dt><dd class="mono dim">' + esc(ltr(d.source_ref)) + '</dd>'
+    + '<dt>' + esc(t("received")) + '</dt><dd class="num">' + fmtWhen(d.received_at) + '</dd></dl>');
+
+  h += conn() + stage(2, isDrive ? t("st2drive") : t("st2other"), "WF-1..3", true,
+      '<div class="dim">' + esc(isDrive ? t("st2driveB") : t("st2otherB")) + '</div>');
+
+  h += conn() + stage(3, t("st3"), "WF-1..3", true,
+      '<div class="mono dim" style="line-height:1.9">'
+    + 'channel = ' + esc(d.channel) + '<br>'
+    + 'source_ref = ' + esc(ltr(d.source_ref)) + '<br>'
+    + 'file_name = ' + esc(ltr(d.file_name)) + '<br>'
+    + 'file_link = ' + (d.file_link ? esc(d.file_link) : '<span class="dim3">' + esc(t("emptyVal")) + '</span>') + '<br>'
+    + 'text = <span class="dim3">' + esc(t("theBody")) + '</span></div>'
+    + '<div class="dim3" style="font-size:12.5px;margin-top:9px">' + esc(t("st3note")) + '</div>');
+
+  h += conn() + stage(4, t("st4"), "WF-4", true,
+      '<dl class="kv">'
+    + '<dt>document_type</dt><dd><span class="pill">' + esc(t(d.document_type)) + '</span></dd>'
+    + '<dt>sender_or_company</dt><dd>' + nf(d.sender_or_company) + '</dd>'
+    + '<dt>summary</dt><dd>' + esc(val(d.summary)) + '</dd>'
+    + '<dt>requested_action</dt><dd>' + nf(d.requested_action) + '</dd>'
+    + '<dt>deadline</dt><dd>' + nf(d.deadline_text) + '</dd>'
+    + '<dt>urgency</dt><dd>' + urgPill(d.urgency) + '</dd>'
+    + '<dt>department</dt><dd>' + esc(t(d.department)) + '</dd>'
+    + '<dt>amount</dt><dd>' + (d.amount != null ? '<span class="num">' + money(d.amount) + '</span>' : nf(null)) + '</dd>'
+    + '<dt>confidence</dt><dd>' + esc(t(d.confidence)) + '</dd></dl>');
+
+  h += conn() + stage(5, t("st5"), "WF-4", true,
+      checkDetail(d).map(function(c){
+        return '<div class="rulerow' + (c.hit ? " trip" : "") + '">'
+          + '<span class="mk">' + (c.hit ? esc(t("tripped")) : "—") + '</span>'
+          + '<span>' + esc(c.label) + '</span>'
+          + '<span class="why">' + esc(c.got) + '</span></div>';
+      }).join("")
+    + '<div style="margin-top:11px">' + statusPill(d.status) + '</div>');
+
+  h += conn() + stage(6, t("st6"), "WF-4", true, '<div class="dim">' + esc(t("st6b")) + '</div>');
+
+  h += conn() + stage(7, t("st7"), "WF-4", true,
+      trace.map(function(x){
+        return '<div class="rulerow' + (x.matched ? " win" : "") + '">'
+          + '<span class="mk num">' + x.rule.rank + '</span>'
+          + '<span>' + esc(val(x.rule.label)) + '</span>'
+          + '<span class="why">' + esc(x.matched ? t("match") : x.why) + '</span></div>';
+      }).join("")
+    + (res
+        ? '<div style="margin-top:12px">' + esc(t("goesTo")) + ' <b>' + esc(val(res.person.full_name)) + '</b> '
+          + '<span class="dim3">' + esc(val(res.person.role_title)) + '</span>'
+          + (res.viaBackup ? '<div class="dim" style="font-size:12.5px;margin-top:3px">'
+              + esc(t("awayNote", { a:val(res.viaBackup.full_name), b:res.viaBackup.away_until })) + '</div>' : '')
+          + '</div>'
+        : '<div class="banner" style="margin-top:11px">' + esc(t("noRule")) + '</div>'));
+
+  h += conn() + stage(8, t("st8"), "WF-4", !!task,
+      task
+        ? '<dl class="kv"><dt>' + esc(t("cTask")) + '</dt><dd>' + esc(val(task.title)) + '</dd>'
+          + '<dt>owner</dt><dd class="mono">' + esc(ltr(task.owner)) + '</dd>'
+          + '<dt>' + esc(t("cPriority")) + '</dt><dd>' + priPill(task.priority) + '</dd>'
+          + '<dt>' + esc(t("cDue")) + '</dt><dd>' + (task.due_date
+              ? '<span class="num">' + esc(task.due_date) + '</span>'
+              : '<span class="notfound">' + esc(t("noDate")) + '</span>') + '</dd></dl>'
+        : '<div class="dim">' + esc(t("st8skip")) + '</div>');
+
+  h += conn() + stage(9, t("st9"), "WF-4", true, '<div class="dim">' + esc(t("st9b")) + '</div>');
+
+  h += conn() + stage(10, t("st10"), "WF-4", true,
+      '<div>' + esc(t("tookBranch", { k:t(mail.kind), u:t(d.urgency) })) + '</div>'
+    + '<div class="mono dim" style="margin-top:7px">' + esc(ltr(mail.to)) + '</div>'
+    + '<div style="margin-top:11px"><button class="btn btn-sm" onclick="setMailDoc(\'' + d.id + '\');go(\'emails\')">'
+    + esc(t("seeEmail")) + '</button></div>');
+
+  h += conn() + stage(11, t("st11"), "WF-1", isDrive,
+      '<div class="dim">' + esc(isDrive ? t("st11b") : t("st11skip")) + '</div>');
+
+  return h;
+}
+
+/* =============================================================== inbox == */
+
+function renderInbox(){
+  var f = state.filters;
+  var all = db.documents();
+  var rows = all.filter(function(d){
+    return (!f.channel  || d.channel     === f.channel)
+      && (!f.department || d.department  === f.department)
+      && (!f.urgency    || d.urgency     === f.urgency)
+      && (!f.status     || d.status      === f.status)
+      && (!f.assignee   || d.assigned_to === f.assignee);
+  });
+
+  var peopleOpts = '<option value="">' + esc(t("anyone")) + '</option>' + db.people().map(function(p){
+    return '<option value="' + p.id + '"' + (p.id === f.assignee ? ' selected' : '') + '>'
+         + esc(val(p.full_name)) + '</option>';
+  }).join("");
+
+  var body = rows.map(function(d){
+    return '<tr class="click" onclick="openDoc(\'' + d.id + '\')">'
+      + '<td class="nowrap dim num">' + fmtWhen(d.received_at) + '</td>'
+      + '<td><div>' + esc(ltr(d.file_name)) + '</div>'
+      +   '<div class="dim3" style="font-size:12px">' + esc(t(d.channel)) + '</div></td>'
+      + '<td><span class="pill">' + esc(t(d.document_type)) + '</span></td>'
+      + '<td>' + nf(d.sender_or_company) + '</td>'
+      + '<td class="nowrap">' + esc(t(d.department)) + '</td>'
+      + '<td>' + urgPill(d.urgency) + '</td>'
+      + '<td class="nowrap">' + nf(d.deadline_text) + '</td>'
+      + '<td class="nowrap">' + esc(personName(d.assigned_to)) + '</td>'
+      + '<td>' + statusPill(d.status) + '</td></tr>';
+  }).join("");
+
+  return head("navInbox", "inboxSub",
+      '<span class="dim3" style="font-size:12.5px">' + esc(t("ofTotal", {a:rows.length, b:all.length})) + '</span>')
+    + '<div class="panelwrap"><div class="toolbar">'
+    +   '<select onchange="setF(\'channel\',this.value)">'    + opts(D.CHANNELS,    f.channel,    "anyChannel") + '</select>'
+    +   '<select onchange="setF(\'department\',this.value)">' + opts(D.DEPARTMENTS, f.department, "anyDept")    + '</select>'
+    +   '<select onchange="setF(\'urgency\',this.value)">'    + opts(D.URGENCIES,   f.urgency,    "anyUrgency") + '</select>'
+    +   '<select onchange="setF(\'status\',this.value)">'     + opts(D.STATUSES,    f.status,     "anyStatus")  + '</select>'
+    +   '<select onchange="setF(\'assignee\',this.value)">'   + peopleOpts + '</select>'
+    +   '<button class="btn btn-sm" onclick="state.filters={};render()">' + esc(t("clear")) + '</button>'
+    + '</div>'
+    + (rows.length
+        ? '<div class="tblwrap"><table class="t"><thead><tr>'
+          + ['cReceived','cFile','cType','cSender','cDept','cUrgency','cDeadline','cAssigned','cStatus']
+              .map(function(k){ return '<th>' + esc(t(k)) + '</th>'; }).join("")
+          + '</tr></thead><tbody>' + body + '</tbody></table></div>'
+        : '<div class="empty">' + esc(t("noMatch")) + '</div>')
+    + '</div>';
+}
+
+/* ============================================================== review == */
+
+function renderReview(){
+  var rows = db.documents().filter(function(d){ return d.status === "needs_review"; });
+
+  var cards = rows.map(function(d){
+    return '<div class="card pad" style="margin-bottom:12px">'
+      + '<div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">'
+      +   '<b style="font-size:14.5px">' + esc(ltr(d.file_name)) + '</b>'
+      +   '<span class="pill">' + esc(t(d.document_type)) + '</span>' + urgPill(d.urgency)
+      +   '<span class="dim3 num nowrap" style="margin-inline-start:auto;font-size:12.5px">' + fmtWhen(d.received_at) + '</span>'
+      + '</div>'
+      + '<div class="banner" style="margin:12px 0">' + esc(val(d.review_reason)) + '</div>'
+      + '<dl class="kv">'
+      +   '<dt>' + esc(t("fSender"))     + '</dt><dd>' + nf(d.sender_or_company) + '</dd>'
+      +   '<dt>' + esc(t("fAction"))     + '</dt><dd>' + nf(d.requested_action) + '</dd>'
+      +   '<dt>' + esc(t("fDeadline"))   + '</dt><dd>' + nf(d.deadline_text) + '</dd>'
+      +   '<dt>' + esc(t("fConfidence")) + '</dt><dd>' + esc(t(d.confidence)) + '</dd>'
+      +   '<dt>' + esc(t("assignedTo"))  + '</dt><dd>' + esc(personName(d.assigned_to)) + '</dd>'
+      + '</dl>'
+      + '<div style="display:flex;gap:8px;margin-top:14px">'
+      +   '<button class="btn btn-primary btn-sm" onclick="alert(t(\'notWired\'))">' + esc(t("approve")) + '</button>'
+      +   '<button class="btn btn-sm" onclick="openDoc(\'' + d.id + '\')">' + esc(t("openFull")) + '</button>'
+      + '</div></div>';
+  }).join("");
+
+  return head("navReview", "reviewSub")
+    + '<div class="card pad" style="margin-bottom:16px">'
+    +   '<div class="lbl" style="margin-bottom:9px">' + esc(t("fourRules")) + '</div>'
+    +   ['rule1','rule2','rule3','rule4'].map(function(k){
+          return '<div class="rulerow"><span class="mk">—</span><span>' + esc(t(k)) + '</span></div>';
+        }).join("")
+    + '</div>'
+    + (rows.length ? cards : '<div class="card empty">' + esc(t("nothingWaiting")) + '</div>');
+}
+
+/* =============================================================== tasks == */
+
+function renderTasks(){
+  var tasks = db.tasks();
+  var blocks = db.people().map(function(p){
+    var mine = tasks.filter(function(x){ return x.assigned_to === p.id; });
+    if (!mine.length) return "";
+    var rows = mine.map(function(x){
+      var d = x.document_id ? byId(db.documents(), x.document_id) : null;
+      return '<tr' + (d ? ' class="click" onclick="openDoc(\'' + d.id + '\')"' : '') + '>'
+        + '<td><div>' + esc(val(x.title)) + '</div>'
+        +   '<div class="dim3" style="font-size:12px;margin-top:2px">' + esc(val(x.ai_summary)) + '</div></td>'
+        + '<td class="nowrap">' + priPill(x.priority) + '</td>'
+        + '<td class="nowrap">' + taskPill(x.status) + '</td>'
+        + '<td class="nowrap dim num">' + (x.due_date ? fmtDate(x.due_date)
+            : '<span class="notfound">' + esc(t("noDate")) + '</span>') + '</td>'
+        + '<td class="nowrap dim">' + (d ? esc(ltr(d.file_name)) : '<span class="dim3">—</span>') + '</td></tr>';
+    }).join("");
+    return '<div style="margin-bottom:20px">'
+      + '<div style="display:flex;align-items:baseline;gap:9px;margin-bottom:8px">'
+      +   '<b style="font-size:14.5px">' + esc(val(p.full_name)) + '</b>'
+      +   '<span class="dim3" style="font-size:12.5px">' + esc(val(p.role_title)) + ' · ' + esc(t(p.department)) + '</span>'
+      + '</div>'
+      + panel('<table class="t"><thead><tr>'
+          + ['cTask','cPriority','cStatus','cDue','cFrom'].map(function(k){ return '<th>' + esc(t(k)) + '</th>'; }).join("")
+          + '</tr></thead><tbody>' + rows + '</tbody></table>')
+      + '</div>';
+  }).join("");
+
+  return head("navTasks", "tasksSub") + blocks;
+}
+
+/* ============================================================== emails == */
+
+function renderEmails(){
+  var d = byId(db.documents(), state.mailDoc) || db.documents()[0];
+  var m = emailFor(d);
+
+  return head("navEmails", "emailsSub")
+    + '<div class="toolbar" style="border-radius:12px;border:1px solid var(--rule);margin-bottom:16px">'
+    +   docPicker(d.id, "setMailDoc")
+    +   '<span class="pill ' + (m.kind === "urgent" ? "p-hi" : "p-lo") + '">'
+    +     esc(t("branch", { k:t(m.kind) })) + '</span></div>'
+    + '<div class="mailbox">'
+    +   '<div class="mailhd">'
+    +     '<div class="row"><span>' + esc(t("to")) + '</span><span class="mono">' + esc(ltr(m.to)) + '</span></div>'
+    +     '<div class="row"><span>' + esc(t("subject")) + '</span><span><b>' + esc(m.subject) + '</b></span></div>'
+    +   '</div><div class="mailbody">' + esc(m.body) + '</div>'
+    + '</div>'
+    + '<div class="head" style="margin-top:26px"><h2>' + esc(t("sentSoFar")) + '</h2></div>'
+    + '<p class="sub">' + esc(t("sentSub")) + '</p>'
+    + panel('<table class="t"><thead><tr>'
+        + ['cSent','cBranch','cTo','cSubject'].map(function(k){ return '<th>' + esc(t(k)) + '</th>'; }).join("")
+        + '</tr></thead><tbody>'
+        + db.notifications().map(function(n){
+            var doc = byId(db.documents(), n.document_id);
+            return '<tr><td class="nowrap dim num">' + fmtWhen(n.sent_at) + '</td>'
+              + '<td><span class="pill ' + (n.kind === "urgent" ? "p-hi" : "p-lo") + '">' + esc(t(n.kind)) + '</span></td>'
+              + '<td class="mono dim">' + esc(ltr(n.to_email)) + '</td>'
+              + '<td>' + esc(doc ? emailFor(doc).subject : "") + '</td></tr>';
+          }).join("")
+        + '</tbody></table>');
+}
+
+/* ============================================================== people == */
+
+function renderPeople(){
+  var tday = today();
+  var rows = db.people().map(function(p){
+    var away = p.away_until && p.away_until >= tday;
+    var bk = byId(db.people(), p.backup_person);
+    var load = db.tasks().filter(function(x){ return x.assigned_to === p.id && x.status !== "done"; }).length;
+    return '<tr>'
+      + '<td><div>' + esc(val(p.full_name)) + '</div>'
+      +   '<div class="dim3 mono" style="font-size:12px">' + esc(ltr(p.slug)) + '</div></td>'
+      + '<td>' + esc(val(p.role_title)) + '</td>'
+      + '<td class="nowrap">' + esc(t(p.department)) + '</td>'
+      + '<td class="mono dim">' + esc(ltr(p.email)) + '</td>'
+      + '<td class="nowrap">' + (away
+          ? '<span class="pill p-me">' + esc(t("awayUntil", {d:p.away_until})) + '</span>'
+          : '<span class="pill p-ok">' + esc(t("available")) + '</span>') + '</td>'
+      + '<td class="nowrap dim">' + (bk ? esc(val(bk.full_name)) : "—") + '</td>'
+      + '<td class="nowrap num">' + load + '</td></tr>';
+  }).join("");
+
+  return head("navPeople", "peopleSub")
+    + panel('<table class="t"><thead><tr>'
+        + ['cName','cRole','cDept','cEmail','cAvail','cBackup','cOpen']
+            .map(function(k){ return '<th>' + esc(t(k)) + '</th>'; }).join("")
+        + '</tr></thead><tbody>' + rows + '</tbody></table>');
+}
+
+/* =============================================================== rules == */
+
+function renderRules(){
+  var rules = db.routingRules();
+  var anyC = '<span class="dim3">' + esc(t("any")) + '</span>';
+
+  var rows = rules.map(function(r){
+    return '<tr>'
+      + '<td class="num nowrap">' + r.rank + '</td>'
+      + '<td>' + esc(val(r.label)) + '</td>'
+      + '<td class="nowrap">' + (r.match_channel ? esc(t(r.match_channel)) : anyC) + '</td>'
+      + '<td class="nowrap">' + (r.match_doc_type ? '<span class="pill">' + esc(t(r.match_doc_type)) + '</span>' : anyC) + '</td>'
+      + '<td class="nowrap">' + (r.match_department ? esc(t(r.match_department)) : anyC) + '</td>'
+      + '<td class="nowrap">' + (r.match_urgency ? urgPill(r.match_urgency) : anyC) + '</td>'
+      + '<td class="nowrap num">' + (r.min_amount != null ? "&ge; " + money(r.min_amount) : anyC) + '</td>'
+      + '<td class="nowrap">' + esc(personName(r.assign_to)) + '</td></tr>';
+  }).join("");
+
+  var s = state.sim;
+  var hit = matchRule(rules, { channel:s.channel, document_type:s.document_type,
+    department:s.department, urgency:s.urgency, amount: s.amount === "" ? null : Number(s.amount) });
+
+  var res;
+  if (!hit){
+    res = '<div class="banner">' + esc(t("noRuleWarn")) + '</div>';
+  } else {
+    var r = resolvePerson(hit.assign_to, today());
+    res = '<dl class="kv">'
+      + '<dt>' + esc(t("ruleLbl")) + '</dt><dd><span class="num">' + hit.rank + '</span> &nbsp;' + esc(val(hit.label)) + '</dd>'
+      + '<dt>' + esc(t("goesTo")) + '</dt><dd><b>' + esc(val(r.person.full_name)) + '</b> '
+      +   '<span class="dim3">' + esc(val(r.person.role_title)) + '</span></dd>'
+      + (r.viaBackup ? '<dt>' + esc(t("why")) + '</dt><dd class="dim">'
+          + esc(t("awayNote", { a:val(r.viaBackup.full_name), b:r.viaBackup.away_until })) + '</dd>' : '')
+      + '</dl>';
+  }
+
+  return head("navRules", "rulesSub")
+    + panel('<table class="t"><thead><tr>'
+        + ['cRank','cRule','cChannel','cType','cDept','cUrgency','cAmount','cAssign']
+            .map(function(k){ return '<th>' + esc(t(k)) + '</th>'; }).join("")
+        + '</tr></thead><tbody>' + rows + '</tbody></table>')
+    + '<div class="head" style="margin-top:26px"><h2>' + esc(t("simulator")) + '</h2></div>'
+    + '<p class="sub">' + esc(t("simSub")) + '</p>'
+    + '<div class="panelwrap"><div class="toolbar">'
+    +   '<select onchange="setSim(\'channel\',this.value)">'       + opts(D.CHANNELS,    s.channel,       "anyChannel") + '</select>'
+    +   '<select onchange="setSim(\'document_type\',this.value)">' + opts(D.DOC_TYPES,   s.document_type, "anyType")    + '</select>'
+    +   '<select onchange="setSim(\'department\',this.value)">'    + opts(D.DEPARTMENTS, s.department,    "anyDept")    + '</select>'
+    +   '<select onchange="setSim(\'urgency\',this.value)">'       + opts(D.URGENCIES,   s.urgency,       "anyUrgency") + '</select>'
+    +   '<input type="number" placeholder="' + esc(t("amountPh")) + '" value="' + esc(s.amount)
+    +     '" style="width:120px" oninput="setSim(\'amount\',this.value)">'
+    + '</div><div style="padding:16px 18px">' + res + '</div></div>';
+}
+
+/* =========================================================== dashboard == */
+
+function renderDash(){
+  var docs = db.documents(), tasks = db.tasks(), people = db.people();
+  var stats = [
+    [docs.length, t("mDocs")],
+    [docs.filter(function(d){ return d.urgency === "High"; }).length, t("mUrgentB")],
+    [docs.filter(function(d){ return d.status === "needs_review"; }).length, t("mWaiting")],
+    [tasks.filter(function(x){ return x.status !== "done"; }).length, t("mOpenTasks")]
+  ].map(function(x){
+    return '<div class="metric"><div class="v num">' + x[0] + '</div><div class="l">' + esc(x[1]) + '</div></div>';
+  }).join("");
+
+  function tally(key){
+    var m = {}; docs.forEach(function(d){ m[d[key]] = (m[d[key]] || 0) + 1; });
+    return Object.keys(m).sort().map(function(k){
+      return '<tr><td>' + esc(t(k)) + '</td><td class="nowrap num">' + m[k] + '</td></tr>';
+    }).join("");
+  }
+
+  var loadRows = people.map(function(p){
+    var mine = tasks.filter(function(x){ return x.assigned_to === p.id && x.status !== "done"; });
+    var urg = mine.filter(function(x){ return x.priority === "urgent"; }).length;
+    return '<tr><td>' + esc(val(p.full_name)) + '</td>'
+      + '<td class="nowrap num">' + mine.length + '</td>'
+      + '<td class="nowrap">' + (urg ? '<span class="pill p-hi">' + urg + '</span>'
+          : '<span class="dim3 num">0</span>') + '</td></tr>';
+  }).join("");
+
+  return head("navDash", "dashSub")
+    + '<div class="grid g3" style="margin-bottom:20px">' + stats + '</div>'
+    + '<div class="grid g2">'
+    +   '<div><div class="lbl" style="margin-bottom:8px">' + esc(t("byDept")) + '</div>'
+    +     panel('<table class="t"><thead><tr><th>' + esc(t("cDept")) + '</th><th>' + esc(t("cDocs"))
+    +       '</th></tr></thead><tbody>' + tally("department") + '</tbody></table>') + '</div>'
+    +   '<div><div class="lbl" style="margin-bottom:8px">' + esc(t("byChannel")) + '</div>'
+    +     panel('<table class="t"><thead><tr><th>' + esc(t("cChannel")) + '</th><th>' + esc(t("cDocs"))
+    +       '</th></tr></thead><tbody>' + tally("channel") + '</tbody></table>') + '</div>'
+    + '</div>'
+    + '<div class="lbl" style="margin:24px 0 8px">' + esc(t("workload")) + '</div>'
+    + panel('<table class="t"><thead><tr><th>' + esc(t("cPerson")) + '</th><th>' + esc(t("cOpen"))
+        + '</th><th>' + esc(t("cUrgentN")) + '</th></tr></thead><tbody>' + loadRows + '</tbody></table>');
+}
+
+/* =============================================================== sheet == */
+
+function openDoc(id){
+  var d = byId(db.documents(), id);
+  if (!d) return;
+  var rule = d.matched_rule ? byId(db.routingRules(), d.matched_rule) : null;
+  var task = d.task_id ? byId(db.tasks(), d.task_id) : null;
+  var notes = db.notifications().filter(function(n){ return n.document_id === d.id; });
+
+  var h = '<div class="shead"><h3>' + esc(ltr(d.file_name)) + '</h3>'
+    + '<button class="xbtn" onclick="closeSheet()" aria-label="Close">&times;</button></div>';
+
+  h += '<div class="ssec"><h4>' + esc(t("secIntake")) + '</h4><dl class="kv">'
+    + '<dt>' + esc(t("cChannel"))   + '</dt><dd>' + esc(t(d.channel)) + '</dd>'
+    + '<dt>' + esc(t("received"))   + '</dt><dd class="num">' + fmtWhen(d.received_at) + '</dd>'
+    + '<dt>' + esc(t("sourceRef"))  + '</dt><dd class="mono dim">' + esc(ltr(d.source_ref)) + '</dd>'
+    + (d.file_link ? '<dt>' + esc(t("cFile")) + '</dt><dd><a href="' + esc(d.file_link)
+        + '" target="_blank" rel="noopener">' + esc(t("openDrive")) + '</a></dd>' : '')
+    + '</dl></div>';
+
+  h += '<div class="ssec"><h4>' + esc(t("secModel")) + '</h4><dl class="kv">'
+    + '<dt>' + esc(t("fType"))     + '</dt><dd><span class="pill">' + esc(t(d.document_type)) + '</span></dd>'
+    + '<dt>' + esc(t("fSender"))   + '</dt><dd>' + nf(d.sender_or_company) + '</dd>'
+    + '<dt>' + esc(t("fSummary"))  + '</dt><dd>' + esc(val(d.summary)) + '</dd>'
+    + '<dt>' + esc(t("fAction"))   + '</dt><dd>' + nf(d.requested_action) + '</dd>'
+    + '<dt>' + esc(t("fDeadline")) + '</dt><dd>' + nf(d.deadline_text)
+    +   ' <span class="dim3">(' + esc(d.deadline_date ? t("normalised", {d:d.deadline_date}) : t("notNormalisable")) + ')</span></dd>'
+    + '<dt>' + esc(t("fUrgency"))  + '</dt><dd>' + urgPill(d.urgency) + '</dd>'
+    + '<dt>' + esc(t("fDept"))     + '</dt><dd>' + esc(t(d.department)) + '</dd>'
+    + '<dt>' + esc(t("fAmount"))   + '</dt><dd>' + (d.amount != null
+        ? '<span class="num">' + money(d.amount) + '</span>' : nf(null)) + '</dd>'
+    + '<dt>' + esc(t("fConfidence")) + '</dt><dd>' + esc(t(d.confidence)) + '</dd>'
+    + '</dl></div>';
+
+  h += '<div class="ssec"><h4>' + esc(t("secStatus")) + '</h4>' + statusPill(d.status)
+    + (d.review_reason ? '<div class="banner" style="margin-top:11px">' + esc(val(d.review_reason)) + '</div>' : '')
+    + '</div>';
+
+  h += '<div class="ssec"><h4>' + esc(t("secRouting")) + '</h4><dl class="kv">'
+    + '<dt>' + esc(t("matchedRule")) + '</dt><dd>' + (rule
+        ? '<span class="num">' + rule.rank + '</span> ' + esc(val(rule.label))
+        : '<span class="dim3">' + esc(t("none")) + '</span>') + '</dd>'
+    + '<dt>' + esc(t("assignedTo")) + '</dt><dd>' + esc(personName(d.assigned_to)) + '</dd>'
+    + '</dl></div>';
+
+  h += '<div class="ssec"><h4>' + esc(t("secResult")) + '</h4><dl class="kv">'
+    + '<dt>' + esc(t("taskW")) + '</dt><dd>' + (task
+        ? esc(val(task.title)) + ' ' + taskPill(task.status)
+        : '<span class="dim3">' + esc(t("noneCreated")) + '</span>') + '</dd>'
+    + '<dt>' + esc(t("notified")) + '</dt><dd>' + (notes.length
+        ? notes.map(function(n){
+            return '<div><span class="pill ' + (n.kind === "urgent" ? "p-hi" : "p-lo") + '">'
+              + esc(t(n.kind)) + '</span> <span class="mono dim">' + esc(ltr(n.to_email)) + '</span></div>';
+          }).join("")
+        : '<span class="dim3">' + esc(t("nothingSent")) + '</span>') + '</dd>'
+    + '</dl></div>';
+
+  document.getElementById("sheet").innerHTML = h;
+  document.getElementById("sheet").classList.add("on");
+  document.getElementById("scrim").classList.add("on");
+}
+</script>
+<script>boot();</script>
+</body>
+</html>
