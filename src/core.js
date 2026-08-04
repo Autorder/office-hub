@@ -128,6 +128,24 @@ var T = {
     cBackup: "Backup", cOpen: "Open tasks",
     available: "Available", awayUntil: "Away until {d}",
 
+    /* people editor */
+    personAdd: "Add person", personNew: "New person", personEdit: "Edit person",
+    fName: "Full name", fSlug: "Short name", fRole: "Role", fLeave: "On leave until",
+    fBackup: "Backup", pActive: "Active",
+    personSave: "Save", personSaving: "Saving…", personDelete: "Remove", personCancel: "Cancel",
+    personSlugHint: "Lowercase, no spaces. DailyTask AI writes this into tasks.owner, which is what joins the two systems.",
+    personLeaveHint: "Leave empty for “not away”. The date is the last day away, inclusive.",
+    personBackupHint: "Who receives the work while this person is away or inactive.",
+    personInactiveHint: "An inactive person keeps their history and their name on past work. New work goes to their backup, so this is the safe way to remove someone.",
+    personFail: "Could not save: ",
+    personEditHint: "Click a person to edit them. Nothing already assigned is moved.",
+    pvRules: "Active rules that assign here: {n} — rank {r}.",
+    pvNoRules: "No active routing rule assigns to this person.",
+    pvGoesTo: "While away or inactive, that work goes to {b}.",
+    pvNoBackup: "With no backup, that work would stay here even while away.",
+    pvBackupAway: "{b} is away too, and the router only looks one step. The work would land on someone who is not there.",
+    personDelAsk: "Remove “{a}” from the table?\n\nThis deletes the row. If they appear on any document, task or rule the workflow will refuse and tell you which — setting them inactive is usually what you want instead.",
+
     /* rules */
     rulesSub: "Rules are rows, not a prompt. A blank cell means “do not care”. They are evaluated by rank, lowest first, and the first rule that matches wins. Rank 99 is the insurance policy.",
     cRank: "Rank", cRule: "Rule", cChannel: "Channel", cAmount: "Amount", cAssign: "Assign to",
@@ -284,6 +302,23 @@ var T = {
     cName: "שם", cRole: "תפקיד", cEmail: "מייל", cAvail: "זמינות",
     cBackup: "מחליף", cOpen: "משימות פתוחות",
     available: "זמין", awayUntil: "בחופשה עד {d}",
+
+    personAdd: "אדם חדש", personNew: "אדם חדש", personEdit: "עריכת אדם",
+    fName: "שם מלא", fSlug: "שם קצר", fRole: "תפקיד", fLeave: "בחופשה עד",
+    fBackup: "מחליף", pActive: "פעיל",
+    personSave: "שמירה", personSaving: "שומר…", personDelete: "הסרה", personCancel: "ביטול",
+    personSlugHint: "אותיות קטנות באנגלית, בלי רווחים. DailyTask AI כותב את זה ל‑tasks.owner, וזה מה שמחבר בין שתי המערכות.",
+    personLeaveHint: "ריק פירושו ״לא בחופשה״. התאריך הוא היום האחרון בחופשה, כולל.",
+    personBackupHint: "מי מקבל את העבודה כשהאדם הזה בחופשה או לא פעיל.",
+    personInactiveHint: "אדם לא פעיל שומר על ההיסטוריה ועל שמו בעבודות קודמות. עבודה חדשה עוברת למחליף, ולכן זו הדרך הבטוחה להסיר מישהו.",
+    personFail: "לא נשמר: ",
+    personEditHint: "לחיצה על אדם פותחת אותו לעריכה. שום דבר שכבר הוקצה לא זז.",
+    pvRules: "כללים פעילים שמגיעים לכאן: {n} ‑ דירוג {r}.",
+    pvNoRules: "אף כלל ניתוב פעיל לא מגיע לאדם הזה.",
+    pvGoesTo: "בזמן חופשה או חוסר פעילות, העבודה הזו עוברת אל {b}.",
+    pvNoBackup: "בלי מחליף, העבודה הזו הייתה נשארת כאן גם בחופשה.",
+    pvBackupAway: "גם {b} בחופשה, והנתב מסתכל צעד אחד בלבד. העבודה הייתה נוחתת אצל מישהו שלא נמצא.",
+    personDelAsk: "להסיר את ״{a}״ מהטבלה?\n\nזו מחיקה של השורה. אם הוא מופיע על מסמך, משימה או כלל ‑ התהליך יסרב ויגיד על מה. סימון כלא־פעיל הוא בדרך כלל מה שרוצים במקום.",
 
     rulesSub: "הכללים הם שורות, לא פרומפט. תא ריק פירושו ״לא אכפת לי״. הם נבדקים לפי דירוג, מהנמוך לגבוה, והכלל הראשון שמתאים מנצח. דירוג 99 הוא פוליסת הביטוח.",
     cRank: "דירוג", cRule: "כלל", cChannel: "ערוץ", cAmount: "סכום", cAssign: "מגיע אל",
@@ -485,7 +520,8 @@ function hookUrl(name){
 }
 function resetUrl(){ return hookUrl("RESET"); }
 function scanUrl(){  return hookUrl("SCAN"); }
-function rulesUrl(){ return hookUrl("RULES"); }
+function rulesUrl(){  return hookUrl("RULES"); }
+function peopleUrl(){ return hookUrl("PEOPLE"); }
 
 function postHook(url, payload){
   return fetch(url, {
@@ -579,19 +615,43 @@ function rulePreview(draft){
   return { win: win, total: docs.length };
 }
 
-function sendRule(payload, onDone){
-  postHook(rulesUrl(), payload).then(function(){
-    /* Re-read rather than patch the local array: what the screen shows is then
-     * what the database holds, including anything WF-7 normalised on the way. */
-    return fetchTable("routing_rules", "select=*&order=rank.asc").then(function(rows){
-      live.routing_rules = rows;
+function personEditable(){ return db.kind === "live" && !!peopleUrl(); }
+
+/* What changes when this person steps aside. A backup that is itself away is
+ * the case worth seeing before saving, and the one nobody thinks to check. */
+function personPreview(draft){
+  var rules = db.routingRules().filter(function(r){
+    return r.is_active !== false && r.assign_to === draft.id;
+  });
+  var stepping = draft.is_active === false || (draft.away_until && draft.away_until >= today());
+  var b = draft.backup_person ? byId(db.people(), draft.backup_person) : null;
+  var bAway = !!(b && (b.is_active === false || (b.away_until && b.away_until >= today())));
+  return { rules: rules.length, ranks: rules.map(function(r){ return r.rank; }),
+           stepping: stepping, backup: b, backupAway: bAway };
+}
+
+/* One shape for both editors: post, re-read the table, redraw. Re-reading
+ * rather than patching the local array means the screen shows what the database
+ * holds, including anything the workflow normalised on the way through. */
+function sendVia(url, table, query, target, failKey, payload, onDone){
+  postHook(url, payload).then(function(){
+    return fetchTable(table, query).then(function(rows){
+      live[target] = rows;
       closeSheet();
       render();
     });
   }).catch(function(e){
-    alert(t("ruleFail") + (e && e.message ? e.message : String(e)));
+    alert(t(failKey) + (e && e.message ? e.message : String(e)));
     if (onDone) onDone();
   });
+}
+
+function sendRule(payload, onDone){
+  sendVia(rulesUrl(), "routing_rules", "select=*&order=rank.asc", "routing_rules",
+          "ruleFail", payload, onDone);
+}
+function sendPerson(payload, onDone){
+  sendVia(peopleUrl(), "people", "select=*", "people", "personFail", payload, onDone);
 }
 
 /* Poll until the expected rows land, then reload. A document can also fail
@@ -705,11 +765,17 @@ function routeTrace(rules, f){
   return out;
 }
 
-/* A person who is away hands the item to their backup. */
+/* A person who is away hands the item to their backup.
+ *
+ * Inactive counts as away, permanently. Until people could be edited, is_active
+ * was decorative - nothing read it, so switching someone off left them still
+ * receiving work. Treating it as leave with no end date is what makes "remove
+ * this person" a safe operation: the row stays, the history it is referenced by
+ * stays, and the work moves. */
 function resolvePerson(personId, todayStr){
   var p = byId(db.people(), personId);
   if (!p) return null;
-  if (p.away_until && p.away_until >= todayStr){
+  if (p.is_active === false || (p.away_until && p.away_until >= todayStr)){
     var b = byId(db.people(), p.backup_person);
     if (b) return { person:b, viaBackup:p };
   }
@@ -834,7 +900,7 @@ function nf(v){
 var state = {
   screen: "flow", filters: {},
   sim: { channel:"drive", document_type:"invoice", department:"Finance", urgency:"Medium", amount:"" },
-  flowDoc: "d1", mailDoc: "d1", ruleId: null
+  flowDoc: "d1", mailDoc: "d1", ruleId: null, personId: null
 };
 
 function go(id){ state.screen = id; state.filters = {}; closeSheet(); render(); window.scrollTo(0,0); }

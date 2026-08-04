@@ -54,6 +54,17 @@ window.OFFICE_HUB_CONFIG = {
      Leave empty to make the Rules screen read-only. */
   N8N_RULES_WEBHOOK_URL: "https://playing-twig-evergreen.ngrok-free.dev/webhook/office-rules",
 
-  N8N_RULES_WEBHOOK_URL_LOCAL: "http://localhost:5678/webhook/office-rules"
+  N8N_RULES_WEBHOOK_URL_LOCAL: "http://localhost:5678/webhook/office-rules",
+
+  /* WF-8 in n8n. The people editor posts here - add, edit, set leave, remove.
+
+     Same reason as WF-7. Editing `people` is if anything the more dangerous of
+     the two: change an email address and the work is still assigned, the task
+     is still created, and the notification goes to a stranger.
+
+     Leave empty to make the People screen read-only. */
+  N8N_PEOPLE_WEBHOOK_URL: "https://playing-twig-evergreen.ngrok-free.dev/webhook/office-people",
+
+  N8N_PEOPLE_WEBHOOK_URL_LOCAL: "http://localhost:5678/webhook/office-people"
 
 };

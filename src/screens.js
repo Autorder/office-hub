@@ -308,28 +308,133 @@ function renderEmails(){
 
 function renderPeople(){
   var tday = today();
+  var edit = personEditable();
   var rows = db.people().map(function(p){
     var away = p.away_until && p.away_until >= tday;
     var bk = byId(db.people(), p.backup_person);
     var load = db.tasks().filter(function(x){ return x.assigned_to === p.id && x.status !== "done"; }).length;
-    return '<tr>'
+    return '<tr' + (edit ? ' class="click" onclick="openPersonEditor(\'' + p.id + '\')"' : '')
+      +   (p.is_active === false ? ' style="opacity:.5"' : '') + '>'
       + '<td><div>' + txt(p.full_name) + '</div>'
       +   '<div class="dim3 mono" style="font-size:12px">' + esc(ltr(p.slug)) + '</div></td>'
       + '<td>' + txt(dbt(p.role_title)) + '</td>'
       + '<td class="nowrap">' + esc(t(p.department)) + '</td>'
       + '<td class="mono dim">' + esc(ltr(p.email)) + '</td>'
-      + '<td class="nowrap">' + (away
+      /* Inactive outranks a leave date in the pill, because it is the stronger
+       * statement: away ends, inactive does not. */
+      + '<td class="nowrap">' + (p.is_active === false
+          ? '<span class="pill p-lo">' + esc(t("pActive")) + ': —</span>'
+          : away
           ? '<span class="pill p-me">' + esc(t("awayUntil", {d:ltr(p.away_until)})) + '</span>'
           : '<span class="pill p-ok">' + esc(t("available")) + '</span>') + '</td>'
       + '<td class="nowrap dim">' + (bk ? txt(bk.full_name) : "—") + '</td>'
       + '<td class="nowrap num">' + load + '</td></tr>';
   }).join("");
 
-  return head("navPeople", "peopleSub")
+  return head("navPeople", "peopleSub",
+      edit ? '<button class="btn btn-primary btn-sm" style="margin-inline-start:auto" '
+             + 'onclick="openPersonEditor()">' + esc(t("personAdd")) + '</button>' : "")
+    + (edit ? '<p class="sub" style="margin-top:-10px">' + esc(t("personEditHint")) + '</p>' : "")
     + panel('<table class="t"><thead><tr>'
         + ['cName','cRole','cDept','cEmail','cAvail','cBackup','cOpen']
             .map(function(k){ return '<th>' + esc(t(k)) + '</th>'; }).join("")
         + '</tr></thead><tbody>' + rows + '</tbody></table>');
+}
+
+/* ======================================================= people editor == */
+
+function openPersonEditor(id){
+  var p = id ? byId(db.people(), id) : null;
+  var W = 'style="width:100%"';
+
+  var h = '<div class="shead"><h3>' + esc(t(p ? "personEdit" : "personNew")) + '</h3>'
+    + '<button class="xbtn" onclick="closeSheet()" aria-label="Close">&times;</button></div>'
+    + '<div class="ssec">'
+    + ruleField("fName", '<input type="text" id="pf_full_name" maxlength="80" ' + W
+        + ' value="' + esc(p ? val(p.full_name) : "") + '">')
+    + ruleField("fSlug", '<input type="text" id="pf_slug" maxlength="24" dir="ltr" ' + W
+        + ' value="' + esc(p ? p.slug : "") + '">', "personSlugHint")
+    + ruleField("cEmail", '<input type="email" id="pf_email" dir="ltr" ' + W
+        + ' value="' + esc(p ? p.email : "") + '">')
+    + ruleField("fRole", '<input type="text" id="pf_role_title" maxlength="60" ' + W
+        + ' value="' + esc(p ? val(p.role_title) : "") + '">')
+    + ruleField("cDept", '<select id="pf_department" ' + W + '>'
+        + D.DEPARTMENTS.map(function(x){
+            return '<option value="' + x + '"' + (p && p.department === x ? ' selected' : '') + '>'
+                 + esc(t(x)) + '</option>';
+          }).join("") + '</select>')
+    + '</div><div class="ssec">'
+    + '<h4>' + esc(t("cAvail")) + '</h4>'
+    + ruleField("fLeave", '<input type="date" id="pf_away_until" dir="ltr" ' + W
+        + ' value="' + esc(p && p.away_until ? p.away_until : "") + '" oninput="personLive()">',
+        "personLeaveHint")
+    + ruleField("fBackup", '<select id="pf_backup_person" ' + W + ' oninput="personLive()">'
+        + '<option value="">' + esc(t("none")) + '</option>'
+        + db.people().filter(function(x){ return !p || x.id !== p.id; }).map(function(x){
+            return '<option value="' + x.id + '"' + (p && p.backup_person === x.id ? ' selected' : '') + '>'
+                 + esc(val(x.full_name)) + '</option>';
+          }).join("") + '</select>', "personBackupHint")
+    + '<label style="display:flex;gap:8px;align-items:center;font-size:13.5px">'
+    +   '<input type="checkbox" id="pf_is_active"' + (!p || p.is_active !== false ? ' checked' : '')
+    +     ' oninput="personLive()">' + esc(t("pActive")) + '</label>'
+    + '<div class="dim3" style="font-size:12px;margin-top:12px">' + esc(t("personInactiveHint")) + '</div>'
+    + '</div><div class="ssec">'
+    + '<div class="banner" id="pf_preview"></div>'
+    + '<div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">'
+    +   '<button class="btn btn-primary btn-sm" id="pf_save" onclick="submitPerson('
+    +     (p ? "'" + p.id + "'" : "null") + ')">' + esc(t("personSave")) + '</button>'
+    +   '<button class="btn btn-sm" onclick="closeSheet()">' + esc(t("personCancel")) + '</button>'
+    +   (p ? '<button class="btn btn-sm" style="margin-inline-start:auto;color:var(--stuck-bg)" '
+            + 'onclick="removePerson(\'' + p.id + '\')">' + esc(t("personDelete")) + '</button>' : "")
+    + '</div></div>';
+
+  state.personId = p ? p.id : null;
+  document.getElementById("sheet").innerHTML = h;
+  document.getElementById("sheet").classList.add("on");
+  document.getElementById("scrim").classList.add("on");
+  personLive();
+}
+
+function personDraft(id){
+  var v = function(x){ var e = document.getElementById("pf_" + x); return e ? e.value : ""; };
+  return {
+    id: id || null,
+    full_name: v("full_name").trim(),
+    slug: v("slug").trim().toLowerCase(),
+    email: v("email").trim(),
+    role_title: v("role_title").trim(),
+    department: v("department"),
+    away_until: v("away_until") || null,
+    backup_person: v("backup_person") || null,
+    is_active: document.getElementById("pf_is_active").checked
+  };
+}
+
+function personLive(){
+  var el = document.getElementById("pf_preview");
+  if (!el) return;
+  var p = personPreview(personDraft(state.personId));
+  var lines = [ p.rules ? t("pvRules", { n:p.rules, r:p.ranks.join(", ") }) : t("pvNoRules") ];
+  if (p.rules){
+    if (!p.backup)        lines.push(t("pvNoBackup"));
+    else if (p.backupAway) lines.push(t("pvBackupAway", { b: val(p.backup.full_name) }));
+    else                   lines.push(t("pvGoesTo",     { b: val(p.backup.full_name) }));
+  }
+  el.textContent = lines.join(" ");
+}
+
+function submitPerson(id){
+  var btn = document.getElementById("pf_save");
+  btn.disabled = true;
+  btn.textContent = t("personSaving");
+  sendPerson({ action: id ? "update" : "create", id: id || undefined, person: personDraft(id) },
+    function(){ btn.disabled = false; btn.textContent = t("personSave"); });
+}
+
+function removePerson(id){
+  var p = byId(db.people(), id);
+  if (!p || !confirm(t("personDelAsk", { a: val(p.full_name) }))) return;
+  sendPerson({ action: "delete", id: id });
 }
 
 /* =============================================================== rules == */
