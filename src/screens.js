@@ -32,6 +32,18 @@ function emptyState(){
   return '<div class="card pad"><b>' + esc(t("emptyTitle")) + '</b>'
        + '<div class="dim" style="margin-top:6px">' + esc(t("emptyBody")) + '</div></div>';
 }
+/* Every department dropdown offers the open ones by code, labelled by name.
+ * A value already stored in a since-closed department is added back so the
+ * filter that is currently applied does not silently reset itself. */
+function deptOpts(sel){
+  var codes = deptCodes().slice();
+  if (sel && codes.indexOf(sel) === -1) codes.push(sel);
+  var h = '<option value="">' + esc(t("anyDept")) + '</option>';
+  for (var i = 0; i < codes.length; i++)
+    h += '<option value="' + esc(codes[i]) + '"' + (codes[i] === sel ? ' selected' : '') + '>'
+       + esc(deptName(codes[i])) + '</option>';
+  return h;
+}
 function docPicker(sel, handler){
   return '<select onchange="' + handler + '(this.value)">' + db.documents().map(function(d){
     return '<option value="' + d.id + '"' + (d.id === sel ? ' selected' : '') + '>'
@@ -98,7 +110,7 @@ function renderFlow(){
     + '<dt>requested_action</dt><dd>' + nf(d.requested_action) + '</dd>'
     + '<dt>deadline</dt><dd>' + nf(d.deadline_text) + '</dd>'
     + '<dt>urgency</dt><dd>' + urgPill(d.urgency) + '</dd>'
-    + '<dt>department</dt><dd>' + esc(t(d.department)) + '</dd>'
+    + '<dt>department</dt><dd>' + txt(deptName(d.department)) + '</dd>'
     + '<dt>amount</dt><dd>' + (d.amount != null ? '<span class="num">' + money(d.amount) + '</span>' : nf(null)) + '</dd>'
     + '<dt>confidence</dt><dd>' + esc(t(d.confidence)) + '</dd></dl>');
 
@@ -177,7 +189,7 @@ function renderInbox(){
       +   '<div class="dim3" style="font-size:12px">' + esc(t(d.channel)) + '</div></td>'
       + '<td><span class="pill">' + esc(t(d.document_type)) + '</span></td>'
       + '<td>' + nf(d.sender_or_company) + '</td>'
-      + '<td class="nowrap">' + esc(t(d.department)) + '</td>'
+      + '<td class="nowrap">' + txt(deptName(d.department)) + '</td>'
       + '<td>' + urgPill(d.urgency) + '</td>'
       + '<td class="nowrap">' + nf(d.deadline_text) + '</td>'
       + '<td class="nowrap">' + esc(personName(d.assigned_to)) + '</td>'
@@ -188,7 +200,7 @@ function renderInbox(){
       '<span class="dim3" style="font-size:12.5px">' + esc(t("ofTotal", {a:rows.length, b:all.length})) + '</span>')
     + '<div class="panelwrap"><div class="toolbar">'
     +   '<select onchange="setF(\'channel\',this.value)">'    + opts(D.CHANNELS,    f.channel,    "anyChannel") + '</select>'
-    +   '<select onchange="setF(\'department\',this.value)">' + opts(D.DEPARTMENTS, f.department, "anyDept")    + '</select>'
+    +   '<select onchange="setF(\'department\',this.value)">' + deptOpts(f.department) + '</select>'
     +   '<select onchange="setF(\'urgency\',this.value)">'    + opts(D.URGENCIES,   f.urgency,    "anyUrgency") + '</select>'
     +   '<select onchange="setF(\'status\',this.value)">'     + opts(D.STATUSES,    f.status,     "anyStatus")  + '</select>'
     +   '<select onchange="setF(\'assignee\',this.value)">'   + peopleOpts + '</select>'
@@ -260,7 +272,7 @@ function renderTasks(){
     return '<div style="margin-bottom:20px">'
       + '<div style="display:flex;align-items:baseline;gap:9px;margin-bottom:8px">'
       +   '<b style="font-size:14.5px">' + txt(p.full_name) + '</b>'
-      +   '<span class="dim3" style="font-size:12.5px">' + txt(dbt(p.role_title)) + ' · ' + esc(t(p.department)) + '</span>'
+      +   '<span class="dim3" style="font-size:12.5px">' + txt(dbt(p.role_title)) + ' · ' + txt(deptName(p.department)) + '</span>'
       + '</div>'
       + panel('<table class="t"><thead><tr>'
           + ['cTask','cPriority','cStatus','cDue','cFrom'].map(function(k){ return '<th>' + esc(t(k)) + '</th>'; }).join("")
@@ -318,7 +330,7 @@ function renderPeople(){
       + '<td><div>' + txt(p.full_name) + '</div>'
       +   '<div class="dim3 mono" style="font-size:12px">' + esc(ltr(p.slug)) + '</div></td>'
       + '<td>' + txt(dbt(p.role_title)) + '</td>'
-      + '<td class="nowrap">' + esc(t(p.department)) + '</td>'
+      + '<td class="nowrap">' + txt(deptName(p.department)) + '</td>'
       + '<td class="mono dim">' + esc(ltr(p.email)) + '</td>'
       /* Inactive outranks a leave date in the pill, because it is the stronger
        * statement: away ends, inactive does not. */
@@ -338,7 +350,86 @@ function renderPeople(){
     + panel('<table class="t"><thead><tr>'
         + ['cName','cRole','cDept','cEmail','cAvail','cBackup','cOpen']
             .map(function(k){ return '<th>' + esc(t(k)) + '</th>'; }).join("")
-        + '</tr></thead><tbody>' + rows + '</tbody></table>');
+        + '</tr></thead><tbody>' + rows + '</tbody></table>')
+    + renderDepartments();
+}
+
+/* ========================================================= departments == */
+/* Rendered under the People table rather than as a ninth tab: a department is
+ * organisational structure, the same as a person, and the tab bar is already
+ * as wide as it should get. */
+
+function renderDepartments(){
+  var rows = departments();
+  if (!rows.length) return "";
+  var edit = deptEditable();
+
+  var body = rows.map(function(d){
+    var u = deptPreview(d.code);
+    return '<tr' + (edit ? ' class="click" onclick="openDeptEditor(\'' + d.code + '\')"' : '')
+      +   (d.is_active === false ? ' style="opacity:.5"' : '') + '>'
+      + '<td class="mono dim3 nowrap">' + esc(ltr(d.code)) + '</td>'
+      + '<td>' + txt(d.name) + '</td>'
+      + '<td class="nowrap">' + (d.is_active !== false
+          ? '<span class="pill p-ok">' + esc(t("deptOpen")) + '</span>'
+          : '<span class="pill p-lo">' + esc(t("deptClosed")) + '</span>') + '</td>'
+      + '<td class="nowrap num">' + u.docs + '</td>'
+      + '<td class="nowrap num">' + u.people + '</td>'
+      + '<td class="nowrap num">' + (u.ranks.length ? u.ranks.join(", ") : '<span class="dim3">—</span>') + '</td>'
+      + '</tr>';
+  }).join("");
+
+  return '<div class="head" style="margin-top:30px"><h2>' + esc(t("deptsH")) + '</h2></div>'
+    + '<p class="sub">' + esc(t("deptsSub")) + '</p>'
+    + panel('<table class="t"><thead><tr>'
+        + ['cSlot','cDeptName','cAvail','cDeptDocs','cDeptPeople','cDeptRules']
+            .map(function(k){ return '<th>' + esc(t(k)) + '</th>'; }).join("")
+        + '</tr></thead><tbody>' + body + '</tbody></table>');
+}
+
+function openDeptEditor(code){
+  var d = null, rows = departments();
+  for (var i = 0; i < rows.length; i++) if (rows[i].code === code) d = rows[i];
+  if (!d) return;
+  var u = deptPreview(code);
+  var W = 'style="width:100%"';
+
+  var h = '<div class="shead"><h3>' + esc(t("deptEdit")) + '</h3>'
+    + '<button class="xbtn" onclick="closeSheet()" aria-label="Close">&times;</button></div>'
+    + '<div class="ssec">'
+    + '<div class="dim3" style="font-size:12px;margin-bottom:12px">'
+    +   '<span class="mono">' + esc(ltr(d.code)) + '</span> &nbsp;'
+    +   esc(t(d.is_builtin ? "deptBuiltin" : "deptSpare")) + '</div>'
+    + ruleField("cDeptName", '<input type="text" id="df_name" maxlength="40" ' + W
+        + ' value="' + esc(d.name) + '">', "deptNameHint")
+    + '<label style="display:flex;gap:8px;align-items:center;font-size:13.5px">'
+    +   '<input type="checkbox" id="df_active"' + (d.is_active !== false ? ' checked' : '') + '>'
+    +   esc(t("deptOpen")) + '</label>'
+    + '<div class="dim3" style="font-size:12px;margin-top:10px">' + esc(t("deptOpenHint")) + '</div>'
+    + '</div><div class="ssec">'
+    + '<div class="banner">' + esc(t("deptUsage", { d:u.docs, p:u.people }))
+    +   (u.ranks.length ? ' ' + esc(t("deptRuleWarn", { r:u.ranks.join(", ") })) : '') + '</div>'
+    + '<div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">'
+    +   '<button class="btn btn-primary btn-sm" id="df_save" onclick="submitDept(\'' + d.code + '\')">'
+    +     esc(t("deptSave")) + '</button>'
+    +   '<button class="btn btn-sm" onclick="closeSheet()">' + esc(t("deptCancel")) + '</button>'
+    + '</div></div>';
+
+  state.deptCode = d.code;
+  document.getElementById("sheet").innerHTML = h;
+  document.getElementById("sheet").classList.add("on");
+  document.getElementById("scrim").classList.add("on");
+}
+
+function submitDept(code){
+  var btn = document.getElementById("df_save");
+  btn.disabled = true;
+  btn.textContent = t("deptSaving");
+  sendDept({ action: "update", department: {
+      code: code,
+      name: document.getElementById("df_name").value.trim(),
+      is_active: document.getElementById("df_active").checked
+    } }, function(){ btn.disabled = false; btn.textContent = t("deptSave"); });
 }
 
 /* ======================================================= people editor == */
@@ -359,9 +450,9 @@ function openPersonEditor(id){
     + ruleField("fRole", '<input type="text" id="pf_role_title" maxlength="60" ' + W
         + ' value="' + esc(p ? val(p.role_title) : "") + '">')
     + ruleField("cDept", '<select id="pf_department" ' + W + '>'
-        + D.DEPARTMENTS.map(function(x){
+        + deptCodes().map(function(x){
             return '<option value="' + x + '"' + (p && p.department === x ? ' selected' : '') + '>'
-                 + esc(t(x)) + '</option>';
+                 + esc(deptName(x)) + '</option>';
           }).join("") + '</select>')
     + '</div><div class="ssec">'
     + '<h4>' + esc(t("cAvail")) + '</h4>'
@@ -452,7 +543,7 @@ function renderRules(){
       + '<td>' + txt(dbt(r.label)) + '</td>'
       + '<td class="nowrap">' + (r.match_channel ? esc(t(r.match_channel)) : anyC) + '</td>'
       + '<td class="nowrap">' + (r.match_doc_type ? '<span class="pill">' + esc(t(r.match_doc_type)) + '</span>' : anyC) + '</td>'
-      + '<td class="nowrap">' + (r.match_department ? esc(t(r.match_department)) : anyC) + '</td>'
+      + '<td class="nowrap">' + (r.match_department ? txt(deptName(r.match_department)) : anyC) + '</td>'
       + '<td class="nowrap">' + (r.match_urgency ? urgPill(r.match_urgency) : anyC) + '</td>'
       /* Bidi mirrors ≥ into ≤ in an RTL cell. That is correct typography and a
        * dangerous rule: "≥ 5,000" is the difference between the manager seeing
@@ -493,7 +584,7 @@ function renderRules(){
     + '<div class="panelwrap"><div class="toolbar">'
     +   '<select onchange="setSim(\'channel\',this.value)">'       + opts(D.CHANNELS,    s.channel,       "anyChannel") + '</select>'
     +   '<select onchange="setSim(\'document_type\',this.value)">' + opts(D.DOC_TYPES,   s.document_type, "anyType")    + '</select>'
-    +   '<select onchange="setSim(\'department\',this.value)">'    + opts(D.DEPARTMENTS, s.department,    "anyDept")    + '</select>'
+    +   '<select onchange="setSim(\'department\',this.value)">'    + deptOpts(s.department) + '</select>'
     +   '<select onchange="setSim(\'urgency\',this.value)">'       + opts(D.URGENCIES,   s.urgency,       "anyUrgency") + '</select>'
     +   '<input type="number" placeholder="' + esc(t("amountPh")) + '" value="' + esc(s.amount)
     +     '" style="width:120px" oninput="setSim(\'amount\',this.value)">'
@@ -546,7 +637,8 @@ function openRuleEditor(id){
     + '<h4>' + esc(t("ruleConds")) + '</h4>'
     + ruleField("cChannel",  sel("channel",  D.CHANNELS,    r && r.match_channel,    "anyChannel"))
     + ruleField("cType",     sel("type",     D.DOC_TYPES,   r && r.match_doc_type,   "anyType"))
-    + ruleField("cDept",     sel("dept",     D.DEPARTMENTS, r && r.match_department, "anyDept"))
+    + ruleField("cDept",     '<select id="rf_dept" style="width:100%" oninput="ruleLive()">'
+        + deptOpts(r && r.match_department) + '</select>')
     + ruleField("cUrgency",  sel("urgency",  D.URGENCIES,   r && r.match_urgency,    "anyUrgency"))
     + ruleField("cAmount",   '<input type="number" id="rf_amount" min="0" step="0.01" ' + W
         + ' placeholder="' + esc(t("any")) + '" value="'
@@ -633,8 +725,9 @@ function renderDash(){
 
   function tally(key){
     var m = {}; docs.forEach(function(d){ m[d[key]] = (m[d[key]] || 0) + 1; });
+    var label = key === "department" ? deptName : t;
     return Object.keys(m).sort().map(function(k){
-      return '<tr><td>' + esc(t(k)) + '</td><td class="nowrap num">' + m[k] + '</td></tr>';
+      return '<tr><td>' + txt(label(k)) + '</td><td class="nowrap num">' + m[k] + '</td></tr>';
     }).join("");
   }
 
@@ -690,7 +783,7 @@ function openDoc(id){
     + '<dt>' + esc(t("fDeadline")) + '</dt><dd>' + nf(d.deadline_text)
     +   ' <span class="dim3">(' + esc(d.deadline_date ? t("normalised", {d:ltr(d.deadline_date)}) : t("notNormalisable")) + ')</span></dd>'
     + '<dt>' + esc(t("fUrgency"))  + '</dt><dd>' + urgPill(d.urgency) + '</dd>'
-    + '<dt>' + esc(t("fDept"))     + '</dt><dd>' + esc(t(d.department)) + '</dd>'
+    + '<dt>' + esc(t("fDept"))     + '</dt><dd>' + txt(deptName(d.department)) + '</dd>'
     + '<dt>' + esc(t("fAmount"))   + '</dt><dd>' + (d.amount != null
         ? '<span class="num">' + money(d.amount) + '</span>' : nf(null)) + '</dd>'
     + '<dt>' + esc(t("fConfidence")) + '</dt><dd>' + esc(t(d.confidence)) + '</dd>'

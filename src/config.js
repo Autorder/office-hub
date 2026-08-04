@@ -65,6 +65,17 @@ window.OFFICE_HUB_CONFIG = {
      Leave empty to make the People screen read-only. */
   N8N_PEOPLE_WEBHOOK_URL: "https://playing-twig-evergreen.ngrok-free.dev/webhook/office-people",
 
-  N8N_PEOPLE_WEBHOOK_URL_LOCAL: "http://localhost:5678/webhook/office-people"
+  N8N_PEOPLE_WEBHOOK_URL_LOCAL: "http://localhost:5678/webhook/office-people",
+
+  /* WF-9 in n8n. The departments editor posts here.
+
+     A department is a slot in the dept_name enum plus a row saying what it is
+     called. Only the row is editable - adding a slot needs ALTER TYPE, which
+     is exactly the thing this indirection exists to stop needing.
+
+     Leave empty to make the Departments table read-only. */
+  N8N_DEPTS_WEBHOOK_URL: "https://playing-twig-evergreen.ngrok-free.dev/webhook/office-departments",
+
+  N8N_DEPTS_WEBHOOK_URL_LOCAL: "http://localhost:5678/webhook/office-departments"
 
 };

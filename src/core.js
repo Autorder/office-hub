@@ -139,6 +139,18 @@ var T = {
     personInactiveHint: "An inactive person keeps their history and their name on past work. New work goes to their backup, so this is the safe way to remove someone.",
     personFail: "Could not save: ",
     personEditHint: "Click a person to edit them. Nothing already assigned is moved.",
+    /* departments */
+    deptsH: "Departments",
+    deptsSub: "A department is a fixed slot with a name you choose. Open one, call it what your office calls it, and the model starts filing documents under it. Close it and no new document can be — the ones already filed keep it.",
+    deptOpen: "Open", deptClosed: "Closed", deptEdit: "Rename department",
+    cSlot: "Slot", cDeptName: "Name", cDeptDocs: "Documents", cDeptPeople: "People", cDeptRules: "Rules",
+    deptSave: "Save", deptSaving: "Saving…", deptCancel: "Cancel", deptFail: "Could not save: ",
+    deptNameHint: "This is the word the model is shown, so it has to read like a department. It replaces the old name everywhere, including on documents already filed — a renamed department is the same department.",
+    deptOpenHint: "A closed department is not offered to the model, so no new document is filed under it.",
+    deptUsage: "In use by {d} document(s), {p} person(s).",
+    deptRuleWarn: "Routing rule(s) at rank {r} match this department. Closing it would stop them firing, so that is refused.",
+    deptBuiltin: "One of the six the system shipped with.",
+    deptSpare: "A spare slot. Give it a name and open it.",
     pvRules: "Active rules that assign here: {n} — rank {r}.",
     pvNoRules: "No active routing rule assigns to this person.",
     pvGoesTo: "While away or inactive, that work goes to {b}.",
@@ -313,6 +325,17 @@ var T = {
     personInactiveHint: "אדם לא פעיל שומר על ההיסטוריה ועל שמו בעבודות קודמות. עבודה חדשה עוברת למחליף, ולכן זו הדרך הבטוחה להסיר מישהו.",
     personFail: "לא נשמר: ",
     personEditHint: "לחיצה על אדם פותחת אותו לעריכה. שום דבר שכבר הוקצה לא זז.",
+    deptsH: "מחלקות",
+    deptsSub: "מחלקה היא מקום קבוע עם שם שאתם בוחרים. פותחים אחת, קוראים לה איך שקוראים לה במשרד, והמודל מתחיל לתייק אליה מסמכים. סוגרים אותה ואף מסמך חדש לא ייכנס ‑ אלה שכבר תויקו נשארים.",
+    deptOpen: "פתוחה", deptClosed: "סגורה", deptEdit: "שינוי שם מחלקה",
+    cSlot: "מקום", cDeptName: "שם", cDeptDocs: "מסמכים", cDeptPeople: "אנשים", cDeptRules: "כללים",
+    deptSave: "שמירה", deptSaving: "שומר…", deptCancel: "ביטול", deptFail: "לא נשמר: ",
+    deptNameHint: "זו המילה שהמודל רואה, ולכן היא צריכה להישמע כמו מחלקה. היא מחליפה את השם הקודם בכל מקום, כולל במסמכים שכבר תויקו ‑ מחלקה ששינתה שם היא אותה מחלקה.",
+    deptOpenHint: "מחלקה סגורה לא מוצעת למודל, ולכן אף מסמך חדש לא יתויק אליה.",
+    deptUsage: "בשימוש ב‑{d} מסמכים, {p} אנשים.",
+    deptRuleWarn: "כללי ניתוב בדירוג {r} מתאימים למחלקה הזו. סגירה שלה הייתה מפסיקה אותם לירות, ולכן היא נדחית.",
+    deptBuiltin: "אחת מהשש שהמערכת הגיעה איתן.",
+    deptSpare: "מקום פנוי. תנו לו שם ופתחו אותו.",
     pvRules: "כללים פעילים שמגיעים לכאן: {n} ‑ דירוג {r}.",
     pvNoRules: "אף כלל ניתוב פעיל לא מגיע לאדם הזה.",
     pvGoesTo: "בזמן חופשה או חוסר פעילות, העבודה הזו עוברת אל {b}.",
@@ -492,7 +515,34 @@ var mockDb = {
  * and a browser that could rewrite routing_rules could redirect where money
  * goes. */
 
-var live = { people:[], routing_rules:[], documents:[], tasks:[], notifications:[] };
+var live = { people:[], routing_rules:[], documents:[], tasks:[], notifications:[], departments:[] };
+
+/* A department is a slot in the dept_name enum plus a row saying what it is
+ * called and whether it is open. The enum value never changes and is never
+ * shown; the name is what everyone reads, and what WF-4 puts in front of the
+ * model. Renaming therefore rewrites history, which is right - a renamed
+ * department is the same department, and only the code identifies it.
+ *
+ * Falls back to naming the code after itself, so a document filed under a
+ * department that was later removed from the table still reads as something. */
+function departments(){ return db.kind === "live" ? live.departments : []; }
+function deptName(code){
+  if (!code) return "";
+  var rows = departments();
+  /* Through t(), not raw. The six seeded names are English words the dictionary
+   * already translates - reading the name straight out of the table showed
+   * "Management" to a Hebrew reader who used to see "הנהלה". A name the user
+   * typed is not a dictionary key, so it comes back unchanged, which is the
+   * whole point: their word wins, the seeded ones stay translated. */
+  for (var i = 0; i < rows.length; i++) if (rows[i].code === code) return t(rows[i].name);
+  return t(code);
+}
+/* Only open departments are offered anywhere a choice is made. A closed one
+ * still renders wherever it was already stored. */
+function deptCodes(){
+  var rows = departments().filter(function(d){ return d.is_active !== false; });
+  return rows.length ? rows.map(function(d){ return d.code; }) : D.DEPARTMENTS;
+}
 
 var supabaseDb = {
   kind: "live",
@@ -522,6 +572,7 @@ function resetUrl(){ return hookUrl("RESET"); }
 function scanUrl(){  return hookUrl("SCAN"); }
 function rulesUrl(){  return hookUrl("RULES"); }
 function peopleUrl(){ return hookUrl("PEOPLE"); }
+function deptsUrl(){  return hookUrl("DEPTS"); }
 
 function postHook(url, payload){
   return fetch(url, {
@@ -653,6 +704,22 @@ function sendRule(payload, onDone){
 function sendPerson(payload, onDone){
   sendVia(peopleUrl(), "people", "select=*", "people", "personFail", payload, onDone);
 }
+function sendDept(payload, onDone){
+  sendVia(deptsUrl(), "departments", "select=*&order=sort.asc", "departments",
+          "deptFail", payload, onDone);
+}
+function deptEditable(){ return db.kind === "live" && !!deptsUrl() && departments().length > 0; }
+
+/* What closing this department would strand. An active rule matching a
+ * department the model can no longer return does not error - it simply never
+ * fires again, which is the whole reason WF-9 refuses it. */
+function deptPreview(code){
+  var docs  = db.documents().filter(function(d){ return d.department === code; }).length;
+  var ppl   = db.people().filter(function(p){ return p.department === code; }).length;
+  var rules = db.routingRules().filter(function(r){
+    return r.is_active !== false && r.match_department === code; });
+  return { docs: docs, people: ppl, ranks: rules.map(function(r){ return r.rank; }) };
+}
 
 /* Poll until the expected rows land, then reload. A document can also fail
  * inside WF-4 — an unreadable scan, a duplicate source_ref — so the target is
@@ -705,12 +772,18 @@ function loadLive(){
     fetchTable("routing_rules", "select=*&order=rank.asc"),
     fetchTable("documents", "select=*&order=received_at.desc"),
     fetchTable("tasks"),
-    fetchTable("notifications")
+    fetchTable("notifications"),
+    /* Added after the other five, and on a project that has not run the
+     * migration yet it does not exist. An empty list is the correct answer
+     * there - deptName falls back to the dictionary and every screen still
+     * reads the way it did before. */
+    fetchTable("departments", "select=*&order=sort.asc").catch(function(){ return []; })
   ]).then(function(r){
     if (!r[0].length) return false;
 
     live.people = r[0]; live.routing_rules = r[1];
     live.documents = r[2]; live.tasks = r[3]; live.notifications = r[4];
+    live.departments = r[5];
 
     /* n8n writes tasks.document_id but never documents.task_id, so the link
      * exists in one direction only. The document sheet reads the other, so
@@ -755,7 +828,7 @@ function routeTrace(rules, f){
     if (!r.is_active) why = "inactive";
     else if (r.match_channel    != null && r.match_channel    !== f.channel)       why = t("channelIs", {c:t(f.channel)});
     else if (r.match_doc_type   != null && r.match_doc_type   !== f.document_type) why = t("typeIs",    {t:t(f.document_type)});
-    else if (r.match_department != null && r.match_department !== f.department)    why = t("deptIs",    {d:t(f.department)});
+    else if (r.match_department != null && r.match_department !== f.department)    why = t("deptIs",    {d:deptName(f.department)});
     else if (r.match_urgency    != null && r.match_urgency    !== f.urgency)       why = t("urgIs",     {u:t(f.urgency)});
     else if (r.min_amount       != null && !(f.amount != null && f.amount >= r.min_amount))
       why = (f.amount == null) ? t("noAmount") : t("amountIs", {a:money(f.amount)});
@@ -819,7 +892,7 @@ function emailFor(d){
     + t("mFile")     + ": " + ltr(d.file_name) + "\n"
     + t("mSender")   + ": " + ltr(sent(d.sender_or_company)) + "\n"
     + t("mType")     + ": " + t(d.document_type) + "\n"
-    + t("mDept")     + ": " + t(d.department) + "\n"
+    + t("mDept")     + ": " + deptName(d.department) + "\n"
     + t("mUrgency")  + ": " + t(d.urgency) + "\n"
     + t("mDeadline") + ": " + sent(d.deadline_text) + "\n"
     + (d.amount != null ? t("mAmount") + ": " + money(d.amount) + "\n" : "")
@@ -900,7 +973,7 @@ function nf(v){
 var state = {
   screen: "flow", filters: {},
   sim: { channel:"drive", document_type:"invoice", department:"Finance", urgency:"Medium", amount:"" },
-  flowDoc: "d1", mailDoc: "d1", ruleId: null, personId: null
+  flowDoc: "d1", mailDoc: "d1", ruleId: null, personId: null, deptCode: null
 };
 
 function go(id){ state.screen = id; state.filters = {}; closeSheet(); render(); window.scrollTo(0,0); }
