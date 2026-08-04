@@ -30,6 +30,17 @@ window.OFFICE_HUB_CONFIG = {
 
   /* Used instead when the page is opened on localhost, so resetting works
      with no tunnel running. */
-  N8N_RESET_WEBHOOK_URL_LOCAL: "http://localhost:5678/webhook/office-reset"
+  N8N_RESET_WEBHOOK_URL_LOCAL: "http://localhost:5678/webhook/office-reset",
+
+  /* WF-6 in n8n. The Scan button posts here. WF-1 only reacts to files that
+     arrive after it started polling, so anything already sitting in Office
+     Inbox - or dropped while n8n was down - would never be picked up. This
+     is the manual sweep: list the folder, process whatever is in it.
+
+     Same host rule as above: tunnel for the published page, localhost for
+     the local one. Leave empty to hide the Scan button entirely. */
+  N8N_SCAN_WEBHOOK_URL: "https://playing-twig-evergreen.ngrok-free.dev/webhook/office-scan",
+
+  N8N_SCAN_WEBHOOK_URL_LOCAL: "http://localhost:5678/webhook/office-scan"
 
 };

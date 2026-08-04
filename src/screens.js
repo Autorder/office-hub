@@ -24,6 +24,14 @@ function head(titleKey, subKey, extra){
        + (extra || "") + '</div><p class="sub">' + esc(t(subKey)) + '</p>';
 }
 function panel(inner){ return '<div class="panelwrap"><div class="tblwrap">' + inner + '</div></div>'; }
+
+/* Reachable now that a live database may legitimately hold no documents —
+ * right after a reset, which is the state the demo starts from. The screens
+ * that pick a single document to walk through have nothing to pick. */
+function emptyState(){
+  return '<div class="card pad"><b>' + esc(t("emptyTitle")) + '</b>'
+       + '<div class="dim" style="margin-top:6px">' + esc(t("emptyBody")) + '</div></div>';
+}
 function docPicker(sel, handler){
   return '<select onchange="' + handler + '(this.value)">' + db.documents().map(function(d){
     return '<option value="' + d.id + '"' + (d.id === sel ? ' selected' : '') + '>'
@@ -42,6 +50,7 @@ function conn(){ return '<div class="conn"></div>'; }
 
 function renderFlow(){
   var d = byId(db.documents(), state.flowDoc) || db.documents()[0];
+  if (!d) return head("flowH", "flowSub") + emptyState();
   var rules = db.routingRules();
   var trace = routeTrace(rules, { channel:d.channel, document_type:d.document_type,
     department:d.department, urgency:d.urgency, amount:d.amount });
@@ -258,6 +267,7 @@ function renderTasks(){
 
 function renderEmails(){
   var d = byId(db.documents(), state.mailDoc) || db.documents()[0];
+  if (!d) return head("navEmails", "emailsSub") + emptyState();
   var m = emailFor(d);
 
   return head("navEmails", "emailsSub")

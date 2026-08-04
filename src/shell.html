@@ -105,6 +105,10 @@ a{color:var(--accent)}
   cursor:pointer;white-space:nowrap;transition:color .12s,border-color .12s,background .12s}
 .btn-reset:hover:not(:disabled){color:var(--stuck-fg);border-color:var(--stuck-fg);background:var(--stuck-bg)}
 .btn-reset:disabled{opacity:.55;cursor:default}
+
+/* Same quiet shape, but this one adds work rather than destroying it, so it
+   leans on the accent instead of the warning colour. */
+.btn-scan:hover:not(:disabled){color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
 .seg svg{width:14px;height:14px}
 
 /* ---- tabs ---- */
@@ -256,6 +260,7 @@ table.t tbody tr.click:hover{background:var(--sunk)}
         </button>
       </div>
       <span class="pill p-me" id="srcPill"></span>
+      <button type="button" class="btn-reset btn-scan" id="scanBtn" hidden></button>
       <button type="button" class="btn-reset" id="resetBtn" hidden></button>
     </div>
   </header>

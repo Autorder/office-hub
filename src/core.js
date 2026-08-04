@@ -18,6 +18,15 @@ var T = {
     resetOk:  "Cleared. Reloading…",
     resetFail: "Reset failed: ",
 
+    scanBtn:  "Scan inbox",
+    scanBusy: "Looking…",
+    scanRun:  "Processing {n}…",
+    scanNone: "Office Inbox is empty. Drop the files in, then scan again.",
+    scanFail: "Scan failed: ",
+
+    emptyTitle: "No documents yet",
+    emptyBody:  "Drop files into Office Inbox in Google Drive, then press Scan inbox.",
+
     navFlow: "Flow", navInbox: "Inbox", navReview: "Needs review", navTasks: "Tasks",
     navEmails: "Emails", navPeople: "People", navRules: "Rules", navDash: "Dashboard",
 
@@ -154,6 +163,15 @@ var T = {
             + "קבצים ב‑Office Processed יחזרו ל‑Office Inbox.\n\nלהמשיך?",
     resetOk:  "אופס. טוען מחדש…",
     resetFail: "האיפוס נכשל: ",
+
+    scanBtn:  "סרוק תיבה",
+    scanBusy: "בודק…",
+    scanRun:  "מעבד {n}…",
+    scanNone: "התיקייה Office Inbox ריקה. הכניסו קבצים ואז סרקו שוב.",
+    scanFail: "הסריקה נכשלה: ",
+
+    emptyTitle: "אין עדיין מסמכים",
+    emptyBody:  "הכניסו קבצים לתיקייה Office Inbox בגוגל דרייב ואז לחצו על ״סרוק תיבה״.",
 
     navFlow: "זרימה", navInbox: "תיבה", navReview: "דורש בדיקה", navTasks: "משימות",
     navEmails: "מיילים", navPeople: "אנשים", navRules: "כללים", navDash: "לוח בקרה",
@@ -310,6 +328,8 @@ function setLang(l){
   document.getElementById("srcPill").textContent = t(db.kind === "mock" ? "srcMock" : "srcLive");
   var rb = document.getElementById("resetBtn");
   if (rb && !rb.disabled) rb.textContent = t("resetBtn");
+  var sb = document.getElementById("scanBtn");
+  if (sb && !sb.disabled) sb.textContent = t("scanBtn");
   closeSheet();
   render();
 }
@@ -361,16 +381,34 @@ var supabaseDb = {
 
 var db = mockDb;
 
-/* ------------------------------------------------------------ reset ---- */
-/* The button asks n8n to clear the demo data. Nothing is deleted from here:
+/* --------------------------------------------------- reset and scan ---- */
+/* Both buttons only ask n8n to act. Nothing is written or deleted from here:
  * this page carries the publishable key, which is public by design, and a
  * page that could delete rows on its own would let anyone who opens the URL
- * do the same. WF-5 holds the service-role credential and does the work. */
+ * do the same. WF-5 and WF-6 hold the credentials and do the work. */
 
-function resetUrl(){
+/* An https page cannot call http://localhost, so the published site needs the
+ * tunnel. Opened locally it should not need one, hence the second URL. */
+function hookUrl(name){
   var c = window.OFFICE_HUB_CONFIG || {};
   var local = location.hostname === "localhost" || location.hostname === "127.0.0.1";
-  return (local && c.N8N_RESET_WEBHOOK_URL_LOCAL) || c.N8N_RESET_WEBHOOK_URL || "";
+  return (local && c["N8N_" + name + "_WEBHOOK_URL_LOCAL"]) || c["N8N_" + name + "_WEBHOOK_URL"] || "";
+}
+function resetUrl(){ return hookUrl("RESET"); }
+function scanUrl(){  return hookUrl("SCAN"); }
+
+function postHook(url){
+  return fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "ngrok-skip-browser-warning": "1" },
+    body: "{}"
+  }).then(function(r){
+    return r.json().catch(function(){ return null; }).then(function(d){
+      if (!r.ok || !d || d.success !== true)
+        throw new Error((d && (d.message || d.error)) || ("HTTP " + r.status));
+      return d;
+    });
+  });
 }
 
 function doReset(){
@@ -381,24 +419,68 @@ function doReset(){
   btn.disabled = true;
   btn.textContent = t("resetBusy");
 
-  fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "ngrok-skip-browser-warning": "1" },
-    body: "{}"
-  }).then(function(r){
-    return r.json().catch(function(){ return null; }).then(function(d){
-      if (!r.ok || !d || d.success !== true)
-        throw new Error((d && (d.message || d.error)) || ("HTTP " + r.status));
-      btn.textContent = t("resetOk");
-      /* Reload rather than clear the arrays: the page then shows exactly what
-       * the database holds, with no chance of the two drifting apart. */
-      location.reload();
-    });
+  postHook(url).then(function(){
+    btn.textContent = t("resetOk");
+    /* Reload rather than clear the arrays: the page then shows exactly what
+     * the database holds, with no chance of the two drifting apart. */
+    location.reload();
   }).catch(function(e){
     alert(t("resetFail") + (e && e.message ? e.message : String(e)));
     btn.disabled = false;
     btn.textContent = t("resetBtn");
   });
+}
+
+/* WF-1 reacts to files that arrive after it starts polling. Anything already
+ * sitting in Office Inbox, or dropped while n8n was stopped, is invisible to
+ * it forever. This is the sweep that catches those. */
+function doScan(){
+  var url = scanUrl();
+  if (!url) return;
+
+  var btn = document.getElementById("scanBtn");
+  btn.disabled = true;
+  btn.textContent = t("scanBusy");
+
+  /* WF-6 answers as soon as it has counted the folder, before it processes
+   * anything — a browser should not sit on an open request while a language
+   * model reads six documents. The count is what tells us when to stop
+   * waiting. */
+  postHook(url).then(function(d){
+    var found = Number(d.found) || 0;
+    if (!found){
+      alert(t("scanNone"));
+      btn.disabled = false;
+      btn.textContent = t("scanBtn");
+      return;
+    }
+    btn.textContent = t("scanRun", { n: found });
+    awaitDocuments(countDocuments() + found);
+  }).catch(function(e){
+    alert(t("scanFail") + (e && e.message ? e.message : String(e)));
+    btn.disabled = false;
+    btn.textContent = t("scanBtn");
+  });
+}
+
+function countDocuments(){ return db.kind === "live" ? live.documents.length : 0; }
+
+/* Poll until the expected rows land, then reload. A document can also fail
+ * inside WF-4 — an unreadable scan, a duplicate source_ref — so the target is
+ * never guaranteed to arrive. The timeout reloads anyway and lets the page
+ * show whatever did make it, which is more honest than spinning forever. */
+function awaitDocuments(target){
+  var tries = 0, MAX = 45;          /* 45 x 4s = three minutes */
+  (function poll(){
+    setTimeout(function(){
+      fetchTable("documents", "select=id").then(function(rows){
+        if (rows.length >= target || ++tries >= MAX) location.reload();
+        else poll();
+      }).catch(function(){
+        if (++tries >= MAX) location.reload(); else poll();
+      });
+    }, 4000);
+  })();
 }
 
 function liveConfigured(){
@@ -419,8 +501,13 @@ function fetchTable(name, query){
 }
 
 /* Switches to live data, or leaves the demo dataset in place and says why.
- * An empty database is not a reason to switch — a blank Inbox looks like a
- * broken page, and the demo rows are what make the screens explainable. */
+ *
+ * The test is people, not documents. Zero documents used to mean "stay on the
+ * demo set", which was right while there was no way to empty the database on
+ * purpose. Now that Reset exists it would be wrong: you would clear everything
+ * and the page would answer with eight invented rows, which reads as a reset
+ * that failed. Zero people, on the other hand, means the schema was never
+ * seeded and this is not the real database. */
 function loadLive(){
   if (!liveConfigured()) return Promise.resolve(false);
 
@@ -431,7 +518,7 @@ function loadLive(){
     fetchTable("tasks"),
     fetchTable("notifications")
   ]).then(function(r){
-    if (!r[2].length) return false;
+    if (!r[0].length) return false;
 
     live.people = r[0]; live.routing_rules = r[1];
     live.documents = r[2]; live.tasks = r[3]; live.notifications = r[4];
@@ -655,12 +742,18 @@ function boot(){
   rb.textContent = t("resetBtn");
   rb.addEventListener("click", doReset);
 
+  var sb = document.getElementById("scanBtn");
+  sb.textContent = t("scanBtn");
+  sb.addEventListener("click", doScan);
+
   loadLive().then(function(switched){
     if (!switched) return;
     document.getElementById("srcPill").textContent = t("srcLive");
-    /* Only offered against the real database. On the demo set there
-     * is nothing to reset, and the button would just mislead. */
+    /* Only offered against the real database. On the demo set there is
+     * nothing to reset and nothing a scan could add, so both buttons
+     * would just mislead. */
     if (resetUrl()) rb.hidden = false;
+    if (scanUrl())  sb.hidden = false;
     render();
   });
 }
