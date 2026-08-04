@@ -33,7 +33,7 @@ var T = {
     /* enum labels */
     drive: "Drive", form: "Form", gmail: "Gmail",
     invoice: "Invoice", request: "Request", report: "Report", complaint: "Complaint",
-    contract: "Contract", quote: "Quote", lead: "Lead", other: "Other",
+    contract: "Contract", quote: "Quote", lead: "Lead", cv: "CV", other: "Other",
     Low: "Low", Medium: "Medium", High: "High",
     Sales: "Sales", Finance: "Finance", Support: "Support", HR: "HR",
     Management: "Management", General: "General",
@@ -47,14 +47,14 @@ var T = {
 
     /* flow */
     flowH: "Flow",
-    flowSub: "One item, every stage, real values. Each card names the n8n node that performs it. This screen is the build specification for the workflow, and the place to disagree before anything is wired.",
-    st1drive: "Google Drive Trigger", st1form: "Webhook", st1gmail: "Gmail Trigger",
+    flowSub: "One document, every stage, real values. Each card names the n8n node that performed it and the workflow it lives in. Pick a different document above and the whole chain is redrawn for it.",
+    st1drive: "Google Drive Trigger / Scan webhook", st1form: "Webhook", st1gmail: "Gmail Trigger",
     whatFired: "What fired it", sourceRef: "Source ref", received: "Received",
-    firedDrive: "A new file appeared in Incoming Documents",
+    firedDrive: "A file appeared in Office Inbox - either the Drive trigger caught it, or the Scan inbox button swept the folder",
     firedForm: "The website form posted to the webhook URL",
     firedGmail: "A new message matched the Gmail query",
-    st2drive: "Download + Extract From File", st2other: "Read the payload",
-    st2driveB: "The file is downloaded by id and converted from PDF, DOCX or TXT into plain text.",
+    st2drive: "Download - Is it a PDF? - Extract from File", st2other: "Read the payload",
+    st2driveB: "The file is downloaded by id, then an IF picks the reader: a PDF goes through the pdf extractor, everything else is read as plain text. Word (.docx) is not a format this node can read - it arrives as ZIP bytes, and the review queue is what catches it.",
     st2otherB: "The incoming fields are joined into one block of plain text.",
     st3: "Set - Normalize",
     st3note: "From here on nothing knows which channel it came from.",
@@ -74,7 +74,7 @@ var T = {
     tookBranch: "Took the {k} branch - urgency is {u}.",
     seeEmail: "See the email",
     st11: "Google Drive - Move File",
-    st11b: "Moved to Processed Documents, so the folder empties and nothing is processed twice.",
+    st11b: "Moved to Office Processed, so the folder empties and the same file is never read twice.",
     st11skip: "Skipped. This item did not arrive as a file, so there is nothing to move.",
 
     /* inbox */
@@ -88,13 +88,18 @@ var T = {
     reviewSub: "The queue exists so that nothing the model was unsure about disappears quietly. These items were still stored, routed and notified - they are simply flagged.",
     fourRules: "The four rules",
     rule1: "confidence = Low",
-    rule2: "three or more fields returned Not found",
+    rule2: "sender, action and deadline all came back empty",
     rule3: "document_type = other",
     rule4: "urgency = High but deadline = Not found",
     approve: "Approve as is", openFull: "Open full record",
     nothingWaiting: "Nothing is waiting for review.",
-    notWired: "Wired in phase 6: marks the document processed.",
-    fieldsMissing: "{n} field(s) missing", confIs: "confidence is {c}", typeIs: "type is {t}",
+    notWired: "Not wired. Approving from here would need a write path, and this page is read-only on purpose.",
+    fieldsMissing: "{n} of 3 missing", confIs: "confidence is {c}", typeIs: "type is {t}",
+
+    /* The four phrases WF-4 can write into review_reason. */
+    rsConf: "Model confidence is {a}", rsFields: "{a} fields returned Not found",
+    rsType: "Document type is {a}",
+    rsNoDeadline: "Urgency is High but no deadline appears in the document",
 
     /* tasks */
     tasksSub: "The same tasks table that DailyTask AI reads, grouped by owner. Every task here was created by the router from a document - that is the loop closing.",
@@ -178,7 +183,7 @@ var T = {
 
     drive: "דרייב", form: "טופס", gmail: "ג׳ימייל",
     invoice: "חשבונית", request: "בקשה", report: "דוח", complaint: "תלונה",
-    contract: "חוזה", quote: "הצעת מחיר", lead: "ליד", other: "אחר",
+    contract: "חוזה", quote: "הצעת מחיר", lead: "ליד", cv: "קורות חיים", other: "אחר",
     Low: "נמוכה", Medium: "בינונית", High: "גבוהה",
     Sales: "מכירות", Finance: "כספים", Support: "תמיכה", HR: "משאבי אנוש",
     Management: "הנהלה", General: "כללי",
@@ -191,14 +196,14 @@ var T = {
     anyStatus: "כל הסטטוסים", anyType: "כל הסוגים", anyone: "כל אחד", clear: "ניקוי", any: "הכל",
 
     flowH: "זרימה",
-    flowSub: "פריט אחד, כל התחנות, ערכים אמיתיים. כל כרטיס נושא את שם הצומת ב‑n8n שמבצע אותו. המסך הזה הוא מפרט הבנייה של התהליך, והמקום לחלוק עליו לפני שמחווטים משהו.",
-    st1drive: "טריגר Google Drive", st1form: "וובהוק", st1gmail: "טריגר Gmail",
+    flowSub: "מסמך אחד, כל התחנות, ערכים אמיתיים. כל כרטיס נושא את שם הצומת ב‑n8n שביצע אותו ואת התהליך שהוא יושב בו. בוחרים מסמך אחר למעלה וכל השרשרת מצוירת מחדש עבורו.",
+    st1drive: "טריגר Google Drive / וובהוק הסריקה", st1form: "וובהוק", st1gmail: "טריגר Gmail",
     whatFired: "מה הפעיל", sourceRef: "מזהה מקור", received: "התקבל",
-    firedDrive: "קובץ חדש הופיע בתיקיית Incoming Documents",
+    firedDrive: "קובץ הופיע בתיקייה Office Inbox ‑ או שהטריגר של דרייב תפס אותו, או שכפתור ״סרוק תיבה״ סרק את התיקייה",
     firedForm: "הטופס באתר שלח POST לכתובת הוובהוק",
     firedGmail: "הודעה חדשה תאמה לשאילתת Gmail",
-    st2drive: "הורדה + חילוץ טקסט מהקובץ", st2other: "קריאת התוכן",
-    st2driveB: "הקובץ יורד לפי מזהה ומומר מ‑PDF, DOCX או TXT לטקסט פשוט.",
+    st2drive: "הורדה ‑ האם זה PDF? ‑ חילוץ מהקובץ", st2other: "קריאת התוכן",
+    st2driveB: "הקובץ יורד לפי מזהה, ואז צומת IF בוחר את הקורא: PDF עובר במחלץ ה‑PDF, וכל השאר נקרא כטקסט פשוט. וורד (docx) אינו פורמט שהצומת יודע לקרוא ‑ הוא מגיע כבייטים של ZIP, ותור הבדיקה הוא מה שתופס אותו.",
     st2otherB: "השדות הנכנסים מאוחדים לגוש טקסט אחד.",
     st3: "Set ‑ נורמליזציה",
     st3note: "מכאן ואילך שום דבר לא יודע מאיזה ערוץ זה הגיע.",
@@ -218,7 +223,7 @@ var T = {
     tookBranch: "עבר בענף ה{k} ‑ הדחיפות היא {u}.",
     seeEmail: "לראות את המייל",
     st11: "Google Drive ‑ העברת הקובץ",
-    st11b: "הועבר ל‑Processed Documents, כך שהתיקייה מתרוקנת ושום דבר לא מעובד פעמיים.",
+    st11b: "הועבר ל‑Office Processed, כך שהתיקייה מתרוקנת ואותו קובץ לא נקרא פעמיים.",
     st11skip: "דולג. הפריט הזה לא הגיע כקובץ, אז אין מה להעביר.",
 
     inboxSub: "כל מה שנכנס למשרד, מכל ערוץ, עם השדות שהמודל החזיר. לחיצה על שורה פותחת את החילוץ המלא.",
@@ -230,13 +235,17 @@ var T = {
     reviewSub: "התור הזה קיים כדי ששום דבר שהמודל לא היה בטוח בו לא ייעלם בשקט. הפריטים האלה עדיין נשמרו, נותבו ונשלחה עליהם התראה ‑ הם פשוט מסומנים.",
     fourRules: "ארבעת הכללים",
     rule1: "רמת ביטחון נמוכה",
-    rule2: "שלושה שדות או יותר חזרו ריקים",
+    rule2: "השולח, הפעולה ותאריך היעד ‑ שלושתם חזרו ריקים",
     rule3: "סוג המסמך הוא ״אחר״",
     rule4: "דחיפות גבוהה אבל אין תאריך יעד",
     approve: "לאשר כמו שזה", openFull: "לפתוח את הרשומה המלאה",
     nothingWaiting: "שום דבר לא ממתין לבדיקה.",
-    notWired: "יחווט בשלב 6: מסמן את המסמך כמעובד.",
-    fieldsMissing: "{n} שדות חסרים", confIs: "הביטחון {c}", typeIs: "הסוג {t}",
+    notWired: "לא מחווט. אישור מכאן היה דורש הרשאת כתיבה, והדף הזה הוא לקריאה בלבד במכוון.",
+    fieldsMissing: "{n} מתוך 3 חסרים", confIs: "רמת הביטחון {c}", typeIs: "הסוג הוא {t}",
+
+    rsConf: "רמת הביטחון של המודל {a}", rsFields: "{a} שדות חזרו ״לא נמצא״",
+    rsType: "סוג המסמך הוא {a}",
+    rsNoDeadline: "הדחיפות גבוהה אבל לא מופיע תאריך יעד במסמך",
 
     tasksSub: "אותה טבלת tasks ש‑DailyTask AI קורא, מקובצת לפי אחראי. כל משימה כאן נוצרה על ידי הנתב מתוך מסמך ‑ זהו המעגל שנסגר.",
     cTask: "משימה", cPriority: "עדיפות", cDue: "יעד", cFrom: "מהמסמך", noDate: "ללא תאריך",
@@ -268,8 +277,8 @@ var T = {
     simSub: "בוחרים סיווג ורואים מי היה מקבל אותו ‑ בלי להעלות קובץ ובלי לחכות. זה מריץ בדיוק את לוגיקת ההתאמה שצמתי ה‑n8n יריצו.",
     amountPh: "סכום", ruleLbl: "כלל", why: "למה",
     noRuleWarn: "אף כלל לא התאים. צריך להוסיף כלל תפס־הכל ‑ בלעדיו פריט יכול להגיע בלי אחראי.",
-    noAmount: "אין סכום במסמך", amountIs: "הסכום {a}",
-    channelIs: "הערוץ {c}", deptIs: "המחלקה {d}", urgIs: "הדחיפות {u}",
+    noAmount: "אין סכום במסמך", amountIs: "הסכום הוא {a}",
+    channelIs: "הערוץ הוא {c}", deptIs: "המחלקה היא {d}", urgIs: "הדחיפות {u}",
 
     dashSub: "המספרים שקריטריוני ההצלחה דורשים, ולצידם העומס שכל אדם באמת נושא.",
     mDocs: "מסמכים עובדו", mUrgentB: "דחופים, עברו בענף הדחוף",
@@ -308,6 +317,57 @@ function sent(v){
   if (v === "Not found") return t("notFound");
   if (v === "No action found") return t("noAction");
   return val(v);
+}
+
+/* People and routing rules are seeded in English and stay that way: n8n reads
+ * those rows, the SQL file defines them, and the Google Sheet logs them. One
+ * source of truth, translated at the point of display.
+ *
+ * Anything not in the map falls through unchanged, so a rule added in the
+ * Supabase dashboard tomorrow still shows up - in English, but visible. A
+ * lookup that threw, or returned the key, would hide it. */
+var DBT = {
+  he: {
+    "Office manager": "מנהלת משרד", "Bookkeeper": "מנהלת חשבונות",
+    "Support lead": "ראש צוות תמיכה", "Founder": "מייסד", "Operations": "תפעול",
+
+    "Large invoice goes to the manager": "חשבונית גדולה למנהלת המשרד",
+    "Ordinary invoices": "חשבוניות רגילות",
+    "Quotes to bookkeeping": "הצעות מחיר להנהלת חשבונות",
+    "Urgent complaints to the manager": "תלונות דחופות למנהלת המשרד",
+    "Complaints to support": "תלונות לתמיכה",
+    "CVs and job applications to HR": "קורות חיים ומועמדויות לכוח אדם",
+    "Anything the model marks HR": "כל מה שהמודל מסמן ככוח אדם",
+    "Leads from the website form": "לידים מהטופס באתר",
+    "Requests to sales": "בקשות למכירות",
+    "Reports and contracts to management": "דוחות וחוזים להנהלה",
+    "Catch-all": "תפס־הכל"
+  }
+};
+function dbt(v){ var s = val(v), m = DBT[LANG]; return (m && m[s]) || s; }
+
+/* WF-4 builds review_reason from four fixed phrases joined with "; ". They are
+ * translated here rather than stored twice, because the workflow has to write
+ * something a Google Sheet reader can also understand. A phrase this list does
+ * not recognise is passed through, which is what happens when the workflow's
+ * wording changes before this does - visibly English, never blank. */
+var REASONS = [
+  [/^Model confidence is (\S+)$/,                                "rsConf"],
+  [/^(\d+) fields returned Not found$/,                          "rsFields"],
+  [/^Document type is (\S+)$/,                                   "rsType"],
+  [/^Urgency is High but no deadline appears in the document$/,  "rsNoDeadline"]
+];
+function reviewReason(v){
+  var s = val(v);
+  if (!s) return "";
+  if (LANG === "en") return esc(s);
+  return esc(s.split("; ").map(function(part){
+    for (var i = 0; i < REASONS.length; i++){
+      var m = part.match(REASONS[i][0]);
+      if (m) return t(REASONS[i][1], { a: m[1] ? t(m[1]) : "" });
+    }
+    return part;
+  }).join("; "));
 }
 
 /* ==================================================== storage + chrome == */
@@ -587,19 +647,24 @@ function resolvePerson(personId, todayStr){
   return { person:p, viaBackup:null };
 }
 
-/* The four review rules. Any one of them alone is enough. */
+/* The four review rules. Any one of them alone is enough.
+ *
+ * Exactly three fields are counted, and they are exactly the three WF-4's
+ * `Derive status` node counts. An earlier version also counted an empty
+ * summary, which made this screen able to report "4 of 3 missing" for a
+ * document the workflow had scored 3 - the simulator disagreeing with the
+ * router it exists to predict. The workflow is the record; this follows it. */
 function checkDetail(d){
   var missing = 0;
   if (d.sender_or_company === "Not found")       missing++;
   if (d.requested_action  === "No action found") missing++;
   if (d.deadline_text     === "Not found")       missing++;
-  if (!d.summary)                                missing++;
   return [
     { label:t("rule1"), hit:d.confidence === "Low",      got:t("confIs", {c:t(d.confidence)}) },
     { label:t("rule2"), hit:missing >= 3,                got:t("fieldsMissing", {n:missing}) },
     { label:t("rule3"), hit:d.document_type === "other", got:t("typeIs", {t:t(d.document_type)}) },
     { label:t("rule4"), hit:d.urgency === "High" && d.deadline_text === "Not found",
-      got:t(d.urgency) + " / " + sent(d.deadline_text) }
+      got:t(d.urgency) + " / " + ltr(sent(d.deadline_text)) }
   ];
 }
 function deriveStatus(d){
@@ -643,7 +708,7 @@ function fmtDate(s){ return s ? s.slice(0,10) : ""; }
 function fmtWhen(s){ return s ? s.slice(0,10) + " " + s.slice(11,16) : ""; }
 function money(n){ return n == null ? "" :
   Number(n).toLocaleString("en-US", {minimumFractionDigits:2, maximumFractionDigits:2}); }
-function personName(id){ var p = byId(db.people(), id); return p ? val(p.full_name) : "—"; }
+function personName(id){ var p = byId(db.people(), id); return p ? ltr(val(p.full_name)) : "—"; }
 
 /* A latin string dropped into a Hebrew sentence gets reordered by the bidi
  * algorithm: "1-invoice.txt" renders as "invoice.txt-1". Wrapping it in an
@@ -651,6 +716,19 @@ function personName(id){ var p = byId(db.people(), id); return p ? val(p.full_na
  * are plain characters, so this also works inside <option>, where markup
  * and dir attributes are unreliable. */
 function ltr(s){ return isRTL() ? "⁦" + String(s == null ? "" : s) + "⁩" : s; }
+
+/* Escape a value that came out of the database rather than the dictionary, and
+ * isolate it when it is in the other language.
+ *
+ * A whole English sentence dropped bare into an RTL paragraph loses its
+ * trailing punctuation to the far end: "Total due is 15,576.00 ILS." renders
+ * with the full stop on the left, and a summary that ends mid-air reads like a
+ * truncation bug. Testing for Hebrew letters rather than for LANG is what lets
+ * a Hebrew summary and an English one sit in the same table and both be right. */
+function txt(v){
+  var s = String(val(v));
+  return esc(/[֐-׿]/.test(s) ? s : ltr(s));
+}
 
 function opts(list, sel, anyKey){
   var h = '<option value="">' + esc(t(anyKey)) + '</option>';
@@ -679,8 +757,7 @@ function taskPill(s){
 function nf(v){
   var isSent = (v === "Not found" || v === "No action found" || v == null || v === "");
   if (isSent) return '<span class="notfound">' + esc(sent(v) || "—") + '</span>';
-  var s = val(v);
-  return esc(/[֐-׿]/.test(s) ? s : ltr(s));
+  return txt(v);
 }
 
 /* =============================================================== boot === */

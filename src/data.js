@@ -16,7 +16,7 @@ window.OFFICE_HUB_DATA = (function () {
   "use strict";
 
   var DEPARTMENTS = ["Sales", "Finance", "Support", "HR", "Management", "General"];
-  var DOC_TYPES = ["invoice", "request", "report", "complaint", "contract", "quote", "lead", "other"];
+  var DOC_TYPES = ["invoice", "request", "report", "complaint", "contract", "quote", "lead", "cv", "other"];
   var URGENCIES = ["Low", "Medium", "High"];
   var CHANNELS = ["drive", "form", "gmail"];
   var STATUSES = ["processed", "needs_review"];

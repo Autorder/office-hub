@@ -7,7 +7,7 @@
 <style>
 :root{
   --paper:#F1F4F3; --surface:#FFFFFF; --sunk:#E8ECEA; --raise:#FFFFFF;
-  --ink:#121816; --ink-2:#4A5451; --ink-3:#7C8683;
+  --ink:#121816; --ink-2:#4A5451; --ink-3:#68716E;
   --rule:#DBE1DE; --rule-2:#C1C8C5;
   --accent:#0D5C52; --accent-ink:#FFFFFF; --accent-soft:#DCEAE6;
   --todo-fg:#5D6965; --todo-bd:#BFC7C3;
@@ -24,7 +24,7 @@
 }
 @media (prefers-color-scheme:dark){:root{
   --paper:#0E1312; --surface:#171C1A; --sunk:#121716; --raise:#1C2220;
-  --ink:#E6ECE9; --ink-2:#98A39F; --ink-3:#6A7571;
+  --ink:#E6ECE9; --ink-2:#98A39F; --ink-3:#8A9591;
   --rule:#272E2B; --rule-2:#38403C;
   --accent:#4FBFA9; --accent-ink:#05221E; --accent-soft:#142E29;
   --todo-fg:#98A39F; --todo-bd:#38403C;
@@ -39,7 +39,7 @@
 }}
 :root[data-theme="dark"]{
   --paper:#0E1312; --surface:#171C1A; --sunk:#121716; --raise:#1C2220;
-  --ink:#E6ECE9; --ink-2:#98A39F; --ink-3:#6A7571;
+  --ink:#E6ECE9; --ink-2:#98A39F; --ink-3:#8A9591;
   --rule:#272E2B; --rule-2:#38403C;
   --accent:#4FBFA9; --accent-ink:#05221E; --accent-soft:#142E29;
   --todo-fg:#98A39F; --todo-bd:#38403C;
@@ -54,7 +54,7 @@
 }
 :root[data-theme="light"]{
   --paper:#F1F4F3; --surface:#FFFFFF; --sunk:#E8ECEA; --raise:#FFFFFF;
-  --ink:#121816; --ink-2:#4A5451; --ink-3:#7C8683;
+  --ink:#121816; --ink-2:#4A5451; --ink-3:#68716E;
   --rule:#DBE1DE; --rule-2:#C1C8C5;
   --accent:#0D5C52; --accent-ink:#FFFFFF; --accent-soft:#DCEAE6;
   --todo-fg:#5D6965; --todo-bd:#BFC7C3;
@@ -100,7 +100,7 @@ a{color:var(--accent)}
 
 /* Destructive, so it does not borrow the accent colour the rest of the
    chrome uses. It stays quiet until hovered. */
-.btn-reset{border:1px solid var(--rule);background:transparent;color:var(--ink-3);
+.btn-reset{border:1px solid var(--rule);background:transparent;color:var(--ink-2);
   border-radius:8px;padding:7px 11px;font:inherit;font-size:12px;font-weight:500;
   cursor:pointer;white-space:nowrap;transition:color .12s,border-color .12s,background .12s}
 .btn-reset:hover:not(:disabled){color:var(--stuck-fg);border-color:var(--stuck-fg);background:var(--stuck-bg)}
@@ -117,7 +117,7 @@ a{color:var(--accent)}
   font-size:13.5px;color:var(--ink-3);white-space:nowrap;margin-bottom:-1px}
 .tabs button:hover{color:var(--ink)}
 .tabs button.on{color:var(--ink);border-bottom-color:var(--accent);font-weight:500}
-.tabs b{display:inline-block;margin-inline-start:6px;background:var(--sunk);color:var(--ink-3);
+.tabs b{display:inline-block;margin-inline-start:6px;background:var(--sunk);color:var(--ink-2);
   border-radius:999px;padding:0 6px;font-size:11px;font-weight:500;line-height:17px;vertical-align:1px}
 .tabs button.on b{background:var(--accent-soft);color:var(--accent)}
 
@@ -185,7 +185,11 @@ table.t tbody tr.click:hover{background:var(--sunk)}
 
 /* ---- flow ---- */
 .stage{background:var(--surface);border:1px solid var(--rule);border-radius:12px;padding:14px 16px}
+/* A skipped stage is dimmed as a whole, which stacked with --ink-2 to land
+   under 3:1 in dark mode. Promoting the body text one step keeps the stage
+   reading as inactive while its sentence stays legible. */
 .stage.skip{opacity:.55}
+.stage.skip .dim{color:var(--ink)}
 .stagehd{display:flex;flex-wrap:wrap;align-items:center;gap:9px;margin-bottom:10px}
 .stepn{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;
   border-radius:50%;background:var(--sunk);color:var(--ink-3);font-size:11.5px;font-weight:500;flex:none;
@@ -199,7 +203,9 @@ table.t tbody tr.click:hover{background:var(--sunk)}
   border-bottom:1px solid var(--rule);font-size:13px}
 .rulerow:last-of-type{border-bottom:0}
 .rulerow .mk{font-family:var(--mono);font-size:11px;min-width:58px;flex:none;color:var(--ink-3)}
-.rulerow.win{color:var(--done-bg)} .rulerow.win .mk{color:var(--done-bg)}
+/* --done-bg is a fill, not a foreground: on the dark surface it measured
+   2.97:1. --ok-fg is the token meant to be read, and it flips with the theme. */
+.rulerow.win{color:var(--ok-fg)} .rulerow.win .mk{color:var(--ok-fg)}
 .rulerow.trip{color:var(--warn-fg)} .rulerow.trip .mk{color:var(--warn-fg)}
 .rulerow .why{margin-inline-start:auto;color:var(--ink-3);font-size:12.5px}
 
@@ -207,7 +213,7 @@ table.t tbody tr.click:hover{background:var(--sunk)}
 .mailbox{background:var(--surface);border:1px solid var(--rule);border-radius:12px;overflow:hidden;box-shadow:var(--shadow)}
 .mailhd{padding:13px 16px;border-bottom:1px solid var(--rule);background:var(--sunk);font-size:13px}
 .mailhd .row{display:flex;gap:10px;padding:2px 0}
-.mailhd .row>span:first-child{color:var(--ink-3);width:64px;flex:none;font-size:12px;padding-top:1px}
+.mailhd .row>span:first-child{color:var(--ink-2);width:64px;flex:none;font-size:12px;padding-top:1px}
 .mailbody{padding:16px;white-space:pre-wrap;font-size:13.5px;line-height:1.7;
   font-family:var(--mono);unicode-bidi:plaintext}
 [dir="rtl"] .mailbody{font-family:var(--sans)}
@@ -358,7 +364,7 @@ window.OFFICE_HUB_DATA = (function () {
   "use strict";
 
   var DEPARTMENTS = ["Sales", "Finance", "Support", "HR", "Management", "General"];
-  var DOC_TYPES = ["invoice", "request", "report", "complaint", "contract", "quote", "lead", "other"];
+  var DOC_TYPES = ["invoice", "request", "report", "complaint", "contract", "quote", "lead", "cv", "other"];
   var URGENCIES = ["Low", "Medium", "High"];
   var CHANNELS = ["drive", "form", "gmail"];
   var STATUSES = ["processed", "needs_review"];
@@ -775,7 +781,7 @@ var T = {
     /* enum labels */
     drive: "Drive", form: "Form", gmail: "Gmail",
     invoice: "Invoice", request: "Request", report: "Report", complaint: "Complaint",
-    contract: "Contract", quote: "Quote", lead: "Lead", other: "Other",
+    contract: "Contract", quote: "Quote", lead: "Lead", cv: "CV", other: "Other",
     Low: "Low", Medium: "Medium", High: "High",
     Sales: "Sales", Finance: "Finance", Support: "Support", HR: "HR",
     Management: "Management", General: "General",
@@ -789,14 +795,14 @@ var T = {
 
     /* flow */
     flowH: "Flow",
-    flowSub: "One item, every stage, real values. Each card names the n8n node that performs it. This screen is the build specification for the workflow, and the place to disagree before anything is wired.",
-    st1drive: "Google Drive Trigger", st1form: "Webhook", st1gmail: "Gmail Trigger",
+    flowSub: "One document, every stage, real values. Each card names the n8n node that performed it and the workflow it lives in. Pick a different document above and the whole chain is redrawn for it.",
+    st1drive: "Google Drive Trigger / Scan webhook", st1form: "Webhook", st1gmail: "Gmail Trigger",
     whatFired: "What fired it", sourceRef: "Source ref", received: "Received",
-    firedDrive: "A new file appeared in Incoming Documents",
+    firedDrive: "A file appeared in Office Inbox - either the Drive trigger caught it, or the Scan inbox button swept the folder",
     firedForm: "The website form posted to the webhook URL",
     firedGmail: "A new message matched the Gmail query",
-    st2drive: "Download + Extract From File", st2other: "Read the payload",
-    st2driveB: "The file is downloaded by id and converted from PDF, DOCX or TXT into plain text.",
+    st2drive: "Download - Is it a PDF? - Extract from File", st2other: "Read the payload",
+    st2driveB: "The file is downloaded by id, then an IF picks the reader: a PDF goes through the pdf extractor, everything else is read as plain text. Word (.docx) is not a format this node can read - it arrives as ZIP bytes, and the review queue is what catches it.",
     st2otherB: "The incoming fields are joined into one block of plain text.",
     st3: "Set - Normalize",
     st3note: "From here on nothing knows which channel it came from.",
@@ -816,7 +822,7 @@ var T = {
     tookBranch: "Took the {k} branch - urgency is {u}.",
     seeEmail: "See the email",
     st11: "Google Drive - Move File",
-    st11b: "Moved to Processed Documents, so the folder empties and nothing is processed twice.",
+    st11b: "Moved to Office Processed, so the folder empties and the same file is never read twice.",
     st11skip: "Skipped. This item did not arrive as a file, so there is nothing to move.",
 
     /* inbox */
@@ -830,13 +836,18 @@ var T = {
     reviewSub: "The queue exists so that nothing the model was unsure about disappears quietly. These items were still stored, routed and notified - they are simply flagged.",
     fourRules: "The four rules",
     rule1: "confidence = Low",
-    rule2: "three or more fields returned Not found",
+    rule2: "sender, action and deadline all came back empty",
     rule3: "document_type = other",
     rule4: "urgency = High but deadline = Not found",
     approve: "Approve as is", openFull: "Open full record",
     nothingWaiting: "Nothing is waiting for review.",
-    notWired: "Wired in phase 6: marks the document processed.",
-    fieldsMissing: "{n} field(s) missing", confIs: "confidence is {c}", typeIs: "type is {t}",
+    notWired: "Not wired. Approving from here would need a write path, and this page is read-only on purpose.",
+    fieldsMissing: "{n} of 3 missing", confIs: "confidence is {c}", typeIs: "type is {t}",
+
+    /* The four phrases WF-4 can write into review_reason. */
+    rsConf: "Model confidence is {a}", rsFields: "{a} fields returned Not found",
+    rsType: "Document type is {a}",
+    rsNoDeadline: "Urgency is High but no deadline appears in the document",
 
     /* tasks */
     tasksSub: "The same tasks table that DailyTask AI reads, grouped by owner. Every task here was created by the router from a document - that is the loop closing.",
@@ -920,7 +931,7 @@ var T = {
 
     drive: "דרייב", form: "טופס", gmail: "ג׳ימייל",
     invoice: "חשבונית", request: "בקשה", report: "דוח", complaint: "תלונה",
-    contract: "חוזה", quote: "הצעת מחיר", lead: "ליד", other: "אחר",
+    contract: "חוזה", quote: "הצעת מחיר", lead: "ליד", cv: "קורות חיים", other: "אחר",
     Low: "נמוכה", Medium: "בינונית", High: "גבוהה",
     Sales: "מכירות", Finance: "כספים", Support: "תמיכה", HR: "משאבי אנוש",
     Management: "הנהלה", General: "כללי",
@@ -933,14 +944,14 @@ var T = {
     anyStatus: "כל הסטטוסים", anyType: "כל הסוגים", anyone: "כל אחד", clear: "ניקוי", any: "הכל",
 
     flowH: "זרימה",
-    flowSub: "פריט אחד, כל התחנות, ערכים אמיתיים. כל כרטיס נושא את שם הצומת ב‑n8n שמבצע אותו. המסך הזה הוא מפרט הבנייה של התהליך, והמקום לחלוק עליו לפני שמחווטים משהו.",
-    st1drive: "טריגר Google Drive", st1form: "וובהוק", st1gmail: "טריגר Gmail",
+    flowSub: "מסמך אחד, כל התחנות, ערכים אמיתיים. כל כרטיס נושא את שם הצומת ב‑n8n שביצע אותו ואת התהליך שהוא יושב בו. בוחרים מסמך אחר למעלה וכל השרשרת מצוירת מחדש עבורו.",
+    st1drive: "טריגר Google Drive / וובהוק הסריקה", st1form: "וובהוק", st1gmail: "טריגר Gmail",
     whatFired: "מה הפעיל", sourceRef: "מזהה מקור", received: "התקבל",
-    firedDrive: "קובץ חדש הופיע בתיקיית Incoming Documents",
+    firedDrive: "קובץ הופיע בתיקייה Office Inbox ‑ או שהטריגר של דרייב תפס אותו, או שכפתור ״סרוק תיבה״ סרק את התיקייה",
     firedForm: "הטופס באתר שלח POST לכתובת הוובהוק",
     firedGmail: "הודעה חדשה תאמה לשאילתת Gmail",
-    st2drive: "הורדה + חילוץ טקסט מהקובץ", st2other: "קריאת התוכן",
-    st2driveB: "הקובץ יורד לפי מזהה ומומר מ‑PDF, DOCX או TXT לטקסט פשוט.",
+    st2drive: "הורדה ‑ האם זה PDF? ‑ חילוץ מהקובץ", st2other: "קריאת התוכן",
+    st2driveB: "הקובץ יורד לפי מזהה, ואז צומת IF בוחר את הקורא: PDF עובר במחלץ ה‑PDF, וכל השאר נקרא כטקסט פשוט. וורד (docx) אינו פורמט שהצומת יודע לקרוא ‑ הוא מגיע כבייטים של ZIP, ותור הבדיקה הוא מה שתופס אותו.",
     st2otherB: "השדות הנכנסים מאוחדים לגוש טקסט אחד.",
     st3: "Set ‑ נורמליזציה",
     st3note: "מכאן ואילך שום דבר לא יודע מאיזה ערוץ זה הגיע.",
@@ -960,7 +971,7 @@ var T = {
     tookBranch: "עבר בענף ה{k} ‑ הדחיפות היא {u}.",
     seeEmail: "לראות את המייל",
     st11: "Google Drive ‑ העברת הקובץ",
-    st11b: "הועבר ל‑Processed Documents, כך שהתיקייה מתרוקנת ושום דבר לא מעובד פעמיים.",
+    st11b: "הועבר ל‑Office Processed, כך שהתיקייה מתרוקנת ואותו קובץ לא נקרא פעמיים.",
     st11skip: "דולג. הפריט הזה לא הגיע כקובץ, אז אין מה להעביר.",
 
     inboxSub: "כל מה שנכנס למשרד, מכל ערוץ, עם השדות שהמודל החזיר. לחיצה על שורה פותחת את החילוץ המלא.",
@@ -972,13 +983,17 @@ var T = {
     reviewSub: "התור הזה קיים כדי ששום דבר שהמודל לא היה בטוח בו לא ייעלם בשקט. הפריטים האלה עדיין נשמרו, נותבו ונשלחה עליהם התראה ‑ הם פשוט מסומנים.",
     fourRules: "ארבעת הכללים",
     rule1: "רמת ביטחון נמוכה",
-    rule2: "שלושה שדות או יותר חזרו ריקים",
+    rule2: "השולח, הפעולה ותאריך היעד ‑ שלושתם חזרו ריקים",
     rule3: "סוג המסמך הוא ״אחר״",
     rule4: "דחיפות גבוהה אבל אין תאריך יעד",
     approve: "לאשר כמו שזה", openFull: "לפתוח את הרשומה המלאה",
     nothingWaiting: "שום דבר לא ממתין לבדיקה.",
-    notWired: "יחווט בשלב 6: מסמן את המסמך כמעובד.",
-    fieldsMissing: "{n} שדות חסרים", confIs: "הביטחון {c}", typeIs: "הסוג {t}",
+    notWired: "לא מחווט. אישור מכאן היה דורש הרשאת כתיבה, והדף הזה הוא לקריאה בלבד במכוון.",
+    fieldsMissing: "{n} מתוך 3 חסרים", confIs: "רמת הביטחון {c}", typeIs: "הסוג הוא {t}",
+
+    rsConf: "רמת הביטחון של המודל {a}", rsFields: "{a} שדות חזרו ״לא נמצא״",
+    rsType: "סוג המסמך הוא {a}",
+    rsNoDeadline: "הדחיפות גבוהה אבל לא מופיע תאריך יעד במסמך",
 
     tasksSub: "אותה טבלת tasks ש‑DailyTask AI קורא, מקובצת לפי אחראי. כל משימה כאן נוצרה על ידי הנתב מתוך מסמך ‑ זהו המעגל שנסגר.",
     cTask: "משימה", cPriority: "עדיפות", cDue: "יעד", cFrom: "מהמסמך", noDate: "ללא תאריך",
@@ -1010,8 +1025,8 @@ var T = {
     simSub: "בוחרים סיווג ורואים מי היה מקבל אותו ‑ בלי להעלות קובץ ובלי לחכות. זה מריץ בדיוק את לוגיקת ההתאמה שצמתי ה‑n8n יריצו.",
     amountPh: "סכום", ruleLbl: "כלל", why: "למה",
     noRuleWarn: "אף כלל לא התאים. צריך להוסיף כלל תפס־הכל ‑ בלעדיו פריט יכול להגיע בלי אחראי.",
-    noAmount: "אין סכום במסמך", amountIs: "הסכום {a}",
-    channelIs: "הערוץ {c}", deptIs: "המחלקה {d}", urgIs: "הדחיפות {u}",
+    noAmount: "אין סכום במסמך", amountIs: "הסכום הוא {a}",
+    channelIs: "הערוץ הוא {c}", deptIs: "המחלקה היא {d}", urgIs: "הדחיפות {u}",
 
     dashSub: "המספרים שקריטריוני ההצלחה דורשים, ולצידם העומס שכל אדם באמת נושא.",
     mDocs: "מסמכים עובדו", mUrgentB: "דחופים, עברו בענף הדחוף",
@@ -1050,6 +1065,57 @@ function sent(v){
   if (v === "Not found") return t("notFound");
   if (v === "No action found") return t("noAction");
   return val(v);
+}
+
+/* People and routing rules are seeded in English and stay that way: n8n reads
+ * those rows, the SQL file defines them, and the Google Sheet logs them. One
+ * source of truth, translated at the point of display.
+ *
+ * Anything not in the map falls through unchanged, so a rule added in the
+ * Supabase dashboard tomorrow still shows up - in English, but visible. A
+ * lookup that threw, or returned the key, would hide it. */
+var DBT = {
+  he: {
+    "Office manager": "מנהלת משרד", "Bookkeeper": "מנהלת חשבונות",
+    "Support lead": "ראש צוות תמיכה", "Founder": "מייסד", "Operations": "תפעול",
+
+    "Large invoice goes to the manager": "חשבונית גדולה למנהלת המשרד",
+    "Ordinary invoices": "חשבוניות רגילות",
+    "Quotes to bookkeeping": "הצעות מחיר להנהלת חשבונות",
+    "Urgent complaints to the manager": "תלונות דחופות למנהלת המשרד",
+    "Complaints to support": "תלונות לתמיכה",
+    "CVs and job applications to HR": "קורות חיים ומועמדויות לכוח אדם",
+    "Anything the model marks HR": "כל מה שהמודל מסמן ככוח אדם",
+    "Leads from the website form": "לידים מהטופס באתר",
+    "Requests to sales": "בקשות למכירות",
+    "Reports and contracts to management": "דוחות וחוזים להנהלה",
+    "Catch-all": "תפס־הכל"
+  }
+};
+function dbt(v){ var s = val(v), m = DBT[LANG]; return (m && m[s]) || s; }
+
+/* WF-4 builds review_reason from four fixed phrases joined with "; ". They are
+ * translated here rather than stored twice, because the workflow has to write
+ * something a Google Sheet reader can also understand. A phrase this list does
+ * not recognise is passed through, which is what happens when the workflow's
+ * wording changes before this does - visibly English, never blank. */
+var REASONS = [
+  [/^Model confidence is (\S+)$/,                                "rsConf"],
+  [/^(\d+) fields returned Not found$/,                          "rsFields"],
+  [/^Document type is (\S+)$/,                                   "rsType"],
+  [/^Urgency is High but no deadline appears in the document$/,  "rsNoDeadline"]
+];
+function reviewReason(v){
+  var s = val(v);
+  if (!s) return "";
+  if (LANG === "en") return esc(s);
+  return esc(s.split("; ").map(function(part){
+    for (var i = 0; i < REASONS.length; i++){
+      var m = part.match(REASONS[i][0]);
+      if (m) return t(REASONS[i][1], { a: m[1] ? t(m[1]) : "" });
+    }
+    return part;
+  }).join("; "));
 }
 
 /* ==================================================== storage + chrome == */
@@ -1329,19 +1395,24 @@ function resolvePerson(personId, todayStr){
   return { person:p, viaBackup:null };
 }
 
-/* The four review rules. Any one of them alone is enough. */
+/* The four review rules. Any one of them alone is enough.
+ *
+ * Exactly three fields are counted, and they are exactly the three WF-4's
+ * `Derive status` node counts. An earlier version also counted an empty
+ * summary, which made this screen able to report "4 of 3 missing" for a
+ * document the workflow had scored 3 - the simulator disagreeing with the
+ * router it exists to predict. The workflow is the record; this follows it. */
 function checkDetail(d){
   var missing = 0;
   if (d.sender_or_company === "Not found")       missing++;
   if (d.requested_action  === "No action found") missing++;
   if (d.deadline_text     === "Not found")       missing++;
-  if (!d.summary)                                missing++;
   return [
     { label:t("rule1"), hit:d.confidence === "Low",      got:t("confIs", {c:t(d.confidence)}) },
     { label:t("rule2"), hit:missing >= 3,                got:t("fieldsMissing", {n:missing}) },
     { label:t("rule3"), hit:d.document_type === "other", got:t("typeIs", {t:t(d.document_type)}) },
     { label:t("rule4"), hit:d.urgency === "High" && d.deadline_text === "Not found",
-      got:t(d.urgency) + " / " + sent(d.deadline_text) }
+      got:t(d.urgency) + " / " + ltr(sent(d.deadline_text)) }
   ];
 }
 function deriveStatus(d){
@@ -1385,7 +1456,7 @@ function fmtDate(s){ return s ? s.slice(0,10) : ""; }
 function fmtWhen(s){ return s ? s.slice(0,10) + " " + s.slice(11,16) : ""; }
 function money(n){ return n == null ? "" :
   Number(n).toLocaleString("en-US", {minimumFractionDigits:2, maximumFractionDigits:2}); }
-function personName(id){ var p = byId(db.people(), id); return p ? val(p.full_name) : "—"; }
+function personName(id){ var p = byId(db.people(), id); return p ? ltr(val(p.full_name)) : "—"; }
 
 /* A latin string dropped into a Hebrew sentence gets reordered by the bidi
  * algorithm: "1-invoice.txt" renders as "invoice.txt-1". Wrapping it in an
@@ -1393,6 +1464,19 @@ function personName(id){ var p = byId(db.people(), id); return p ? val(p.full_na
  * are plain characters, so this also works inside <option>, where markup
  * and dir attributes are unreliable. */
 function ltr(s){ return isRTL() ? "⁦" + String(s == null ? "" : s) + "⁩" : s; }
+
+/* Escape a value that came out of the database rather than the dictionary, and
+ * isolate it when it is in the other language.
+ *
+ * A whole English sentence dropped bare into an RTL paragraph loses its
+ * trailing punctuation to the far end: "Total due is 15,576.00 ILS." renders
+ * with the full stop on the left, and a summary that ends mid-air reads like a
+ * truncation bug. Testing for Hebrew letters rather than for LANG is what lets
+ * a Hebrew summary and an English one sit in the same table and both be right. */
+function txt(v){
+  var s = String(val(v));
+  return esc(/[֐-׿]/.test(s) ? s : ltr(s));
+}
 
 function opts(list, sel, anyKey){
   var h = '<option value="">' + esc(t(anyKey)) + '</option>';
@@ -1421,8 +1505,7 @@ function taskPill(s){
 function nf(v){
   var isSent = (v === "Not found" || v === "No action found" || v == null || v === "");
   if (isSent) return '<span class="notfound">' + esc(sent(v) || "—") + '</span>';
-  var s = val(v);
-  return esc(/[֐-׿]/.test(s) ? s : ltr(s));
+  return txt(v);
 }
 
 /* =============================================================== boot === */
@@ -1569,16 +1652,24 @@ function renderFlow(){
     + docPicker(d.id, "setFlowDoc")
     + '<span class="pill">' + esc(t(d.channel)) + '</span>' + statusPill(d.status) + '</div>';
 
-  h += stage(1, t("st1" + d.channel), "WF-" + (isDrive ? "1" : d.channel === "form" ? "2" : "3"), true,
+  /* A Drive file carries no record of which of the two intakes read it - both
+   * use the Drive id as source_ref, which is the point. Naming both is honest;
+   * naming one would be a guess. */
+  h += stage(1, t("st1" + d.channel), isDrive ? "WF-1 · WF-6" : d.channel === "form" ? "WF-2" : "WF-3", true,
       '<dl class="kv"><dt>' + esc(t("whatFired")) + '</dt><dd>' + esc(t("fired" + d.channel.charAt(0).toUpperCase() + d.channel.slice(1))) + '</dd>'
     + '<dt>' + esc(t("sourceRef")) + '</dt><dd class="mono dim">' + esc(ltr(d.source_ref)) + '</dd>'
     + '<dt>' + esc(t("received")) + '</dt><dd class="num">' + fmtWhen(d.received_at) + '</dd></dl>');
 
-  h += conn() + stage(2, isDrive ? t("st2drive") : t("st2other"), "WF-1..3", true,
+  h += conn() + stage(2, isDrive ? t("st2drive") : t("st2other"), "WF-1..3, WF-6", true,
       '<div class="dim">' + esc(isDrive ? t("st2driveB") : t("st2otherB")) + '</div>');
 
-  h += conn() + stage(3, t("st3"), "WF-1..3", true,
-      '<div class="mono dim" style="line-height:1.9">'
+  h += conn() + stage(3, t("st3"), "WF-1..3, WF-6", true,
+      /* dir="ltr" is load-bearing. This is a code listing, and in an RTL
+       * paragraph the two latin runs on each line are placed right-to-left
+       * relative to one another: "source_ref = 1vav6Bx" reads back as
+       * "1vav6Bx = source_ref". Isolating the value made it worse, not better,
+       * because an isolate is what turns the value into a reorderable unit. */
+      '<div class="mono dim" dir="ltr" style="line-height:1.9;text-align:start">'
     + 'channel = ' + esc(d.channel) + '<br>'
     + 'source_ref = ' + esc(ltr(d.source_ref)) + '<br>'
     + 'file_name = ' + esc(ltr(d.file_name)) + '<br>'
@@ -1590,7 +1681,7 @@ function renderFlow(){
       '<dl class="kv">'
     + '<dt>document_type</dt><dd><span class="pill">' + esc(t(d.document_type)) + '</span></dd>'
     + '<dt>sender_or_company</dt><dd>' + nf(d.sender_or_company) + '</dd>'
-    + '<dt>summary</dt><dd>' + esc(val(d.summary)) + '</dd>'
+    + '<dt>summary</dt><dd>' + txt(d.summary) + '</dd>'
     + '<dt>requested_action</dt><dd>' + nf(d.requested_action) + '</dd>'
     + '<dt>deadline</dt><dd>' + nf(d.deadline_text) + '</dd>'
     + '<dt>urgency</dt><dd>' + urgPill(d.urgency) + '</dd>'
@@ -1613,20 +1704,20 @@ function renderFlow(){
       trace.map(function(x){
         return '<div class="rulerow' + (x.matched ? " win" : "") + '">'
           + '<span class="mk num">' + x.rule.rank + '</span>'
-          + '<span>' + esc(val(x.rule.label)) + '</span>'
+          + '<span>' + txt(dbt(x.rule.label)) + '</span>'
           + '<span class="why">' + esc(x.matched ? t("match") : x.why) + '</span></div>';
       }).join("")
     + (res
-        ? '<div style="margin-top:12px">' + esc(t("goesTo")) + ' <b>' + esc(val(res.person.full_name)) + '</b> '
-          + '<span class="dim3">' + esc(val(res.person.role_title)) + '</span>'
+        ? '<div style="margin-top:12px">' + esc(t("goesTo")) + ' <b>' + txt(res.person.full_name) + '</b> '
+          + '<span class="dim3">' + txt(dbt(res.person.role_title)) + '</span>'
           + (res.viaBackup ? '<div class="dim" style="font-size:12.5px;margin-top:3px">'
-              + esc(t("awayNote", { a:val(res.viaBackup.full_name), b:res.viaBackup.away_until })) + '</div>' : '')
+              + esc(t("awayNote", { a:ltr(val(res.viaBackup.full_name)), b:ltr(res.viaBackup.away_until) })) + '</div>' : '')
           + '</div>'
         : '<div class="banner" style="margin-top:11px">' + esc(t("noRule")) + '</div>'));
 
   h += conn() + stage(8, t("st8"), "WF-4", !!task,
       task
-        ? '<dl class="kv"><dt>' + esc(t("cTask")) + '</dt><dd>' + esc(val(task.title)) + '</dd>'
+        ? '<dl class="kv"><dt>' + esc(t("cTask")) + '</dt><dd>' + txt(task.title) + '</dd>'
           + '<dt>owner</dt><dd class="mono">' + esc(ltr(task.owner)) + '</dd>'
           + '<dt>' + esc(t("cPriority")) + '</dt><dd>' + priPill(task.priority) + '</dd>'
           + '<dt>' + esc(t("cDue")) + '</dt><dd>' + (task.due_date
@@ -1642,7 +1733,7 @@ function renderFlow(){
     + '<div style="margin-top:11px"><button class="btn btn-sm" onclick="setMailDoc(\'' + d.id + '\');go(\'emails\')">'
     + esc(t("seeEmail")) + '</button></div>');
 
-  h += conn() + stage(11, t("st11"), "WF-1", isDrive,
+  h += conn() + stage(11, t("st11"), "WF-1 · WF-6", isDrive,
       '<div class="dim">' + esc(isDrive ? t("st11b") : t("st11skip")) + '</div>');
 
   return h;
@@ -1663,7 +1754,7 @@ function renderInbox(){
 
   var peopleOpts = '<option value="">' + esc(t("anyone")) + '</option>' + db.people().map(function(p){
     return '<option value="' + p.id + '"' + (p.id === f.assignee ? ' selected' : '') + '>'
-         + esc(val(p.full_name)) + '</option>';
+         + txt(p.full_name) + '</option>';
   }).join("");
 
   var body = rows.map(function(d){
@@ -1711,7 +1802,7 @@ function renderReview(){
       +   '<span class="pill">' + esc(t(d.document_type)) + '</span>' + urgPill(d.urgency)
       +   '<span class="dim3 num nowrap" style="margin-inline-start:auto;font-size:12.5px">' + fmtWhen(d.received_at) + '</span>'
       + '</div>'
-      + '<div class="banner" style="margin:12px 0">' + esc(val(d.review_reason)) + '</div>'
+      + '<div class="banner" style="margin:12px 0">' + reviewReason(d.review_reason) + '</div>'
       + '<dl class="kv">'
       +   '<dt>' + esc(t("fSender"))     + '</dt><dd>' + nf(d.sender_or_company) + '</dd>'
       +   '<dt>' + esc(t("fAction"))     + '</dt><dd>' + nf(d.requested_action) + '</dd>'
@@ -1745,8 +1836,8 @@ function renderTasks(){
     var rows = mine.map(function(x){
       var d = x.document_id ? byId(db.documents(), x.document_id) : null;
       return '<tr' + (d ? ' class="click" onclick="openDoc(\'' + d.id + '\')"' : '') + '>'
-        + '<td><div>' + esc(val(x.title)) + '</div>'
-        +   '<div class="dim3" style="font-size:12px;margin-top:2px">' + esc(val(x.ai_summary)) + '</div></td>'
+        + '<td><div>' + txt(x.title) + '</div>'
+        +   '<div class="dim3" style="font-size:12px;margin-top:2px">' + txt(x.ai_summary) + '</div></td>'
         + '<td class="nowrap">' + priPill(x.priority) + '</td>'
         + '<td class="nowrap">' + taskPill(x.status) + '</td>'
         + '<td class="nowrap dim num">' + (x.due_date ? fmtDate(x.due_date)
@@ -1755,8 +1846,8 @@ function renderTasks(){
     }).join("");
     return '<div style="margin-bottom:20px">'
       + '<div style="display:flex;align-items:baseline;gap:9px;margin-bottom:8px">'
-      +   '<b style="font-size:14.5px">' + esc(val(p.full_name)) + '</b>'
-      +   '<span class="dim3" style="font-size:12.5px">' + esc(val(p.role_title)) + ' · ' + esc(t(p.department)) + '</span>'
+      +   '<b style="font-size:14.5px">' + txt(p.full_name) + '</b>'
+      +   '<span class="dim3" style="font-size:12.5px">' + txt(dbt(p.role_title)) + ' · ' + esc(t(p.department)) + '</span>'
       + '</div>'
       + panel('<table class="t"><thead><tr>'
           + ['cTask','cPriority','cStatus','cDue','cFrom'].map(function(k){ return '<th>' + esc(t(k)) + '</th>'; }).join("")
@@ -1809,15 +1900,15 @@ function renderPeople(){
     var bk = byId(db.people(), p.backup_person);
     var load = db.tasks().filter(function(x){ return x.assigned_to === p.id && x.status !== "done"; }).length;
     return '<tr>'
-      + '<td><div>' + esc(val(p.full_name)) + '</div>'
+      + '<td><div>' + txt(p.full_name) + '</div>'
       +   '<div class="dim3 mono" style="font-size:12px">' + esc(ltr(p.slug)) + '</div></td>'
-      + '<td>' + esc(val(p.role_title)) + '</td>'
+      + '<td>' + txt(dbt(p.role_title)) + '</td>'
       + '<td class="nowrap">' + esc(t(p.department)) + '</td>'
       + '<td class="mono dim">' + esc(ltr(p.email)) + '</td>'
       + '<td class="nowrap">' + (away
-          ? '<span class="pill p-me">' + esc(t("awayUntil", {d:p.away_until})) + '</span>'
+          ? '<span class="pill p-me">' + esc(t("awayUntil", {d:ltr(p.away_until)})) + '</span>'
           : '<span class="pill p-ok">' + esc(t("available")) + '</span>') + '</td>'
-      + '<td class="nowrap dim">' + (bk ? esc(val(bk.full_name)) : "—") + '</td>'
+      + '<td class="nowrap dim">' + (bk ? txt(bk.full_name) : "—") + '</td>'
       + '<td class="nowrap num">' + load + '</td></tr>';
   }).join("");
 
@@ -1837,12 +1928,16 @@ function renderRules(){
   var rows = rules.map(function(r){
     return '<tr>'
       + '<td class="num nowrap">' + r.rank + '</td>'
-      + '<td>' + esc(val(r.label)) + '</td>'
+      + '<td>' + txt(dbt(r.label)) + '</td>'
       + '<td class="nowrap">' + (r.match_channel ? esc(t(r.match_channel)) : anyC) + '</td>'
       + '<td class="nowrap">' + (r.match_doc_type ? '<span class="pill">' + esc(t(r.match_doc_type)) + '</span>' : anyC) + '</td>'
       + '<td class="nowrap">' + (r.match_department ? esc(t(r.match_department)) : anyC) + '</td>'
       + '<td class="nowrap">' + (r.match_urgency ? urgPill(r.match_urgency) : anyC) + '</td>'
-      + '<td class="nowrap num">' + (r.min_amount != null ? "&ge; " + money(r.min_amount) : anyC) + '</td>'
+      /* Bidi mirrors ≥ into ≤ in an RTL cell. That is correct typography and a
+       * dangerous rule: "≥ 5,000" is the difference between the manager seeing
+       * a large invoice and never seeing one. The isolate pins it LTR. */
+      + '<td class="nowrap num">' + (r.min_amount != null
+          ? esc(ltr("≥ " + money(r.min_amount))) : anyC) + '</td>'
       + '<td class="nowrap">' + esc(personName(r.assign_to)) + '</td></tr>';
   }).join("");
 
@@ -1856,11 +1951,11 @@ function renderRules(){
   } else {
     var r = resolvePerson(hit.assign_to, today());
     res = '<dl class="kv">'
-      + '<dt>' + esc(t("ruleLbl")) + '</dt><dd><span class="num">' + hit.rank + '</span> &nbsp;' + esc(val(hit.label)) + '</dd>'
-      + '<dt>' + esc(t("goesTo")) + '</dt><dd><b>' + esc(val(r.person.full_name)) + '</b> '
-      +   '<span class="dim3">' + esc(val(r.person.role_title)) + '</span></dd>'
+      + '<dt>' + esc(t("ruleLbl")) + '</dt><dd><span class="num">' + hit.rank + '</span> &nbsp;' + txt(dbt(hit.label)) + '</dd>'
+      + '<dt>' + esc(t("goesTo")) + '</dt><dd><b>' + txt(r.person.full_name) + '</b> '
+      +   '<span class="dim3">' + txt(dbt(r.person.role_title)) + '</span></dd>'
       + (r.viaBackup ? '<dt>' + esc(t("why")) + '</dt><dd class="dim">'
-          + esc(t("awayNote", { a:val(r.viaBackup.full_name), b:r.viaBackup.away_until })) + '</dd>' : '')
+          + esc(t("awayNote", { a:ltr(val(r.viaBackup.full_name)), b:ltr(r.viaBackup.away_until) })) + '</dd>' : '')
       + '</dl>';
   }
 
@@ -1904,7 +1999,7 @@ function renderDash(){
   var loadRows = people.map(function(p){
     var mine = tasks.filter(function(x){ return x.assigned_to === p.id && x.status !== "done"; });
     var urg = mine.filter(function(x){ return x.priority === "urgent"; }).length;
-    return '<tr><td>' + esc(val(p.full_name)) + '</td>'
+    return '<tr><td>' + txt(p.full_name) + '</td>'
       + '<td class="nowrap num">' + mine.length + '</td>'
       + '<td class="nowrap">' + (urg ? '<span class="pill p-hi">' + urg + '</span>'
           : '<span class="dim3 num">0</span>') + '</td></tr>';
@@ -1948,10 +2043,10 @@ function openDoc(id){
   h += '<div class="ssec"><h4>' + esc(t("secModel")) + '</h4><dl class="kv">'
     + '<dt>' + esc(t("fType"))     + '</dt><dd><span class="pill">' + esc(t(d.document_type)) + '</span></dd>'
     + '<dt>' + esc(t("fSender"))   + '</dt><dd>' + nf(d.sender_or_company) + '</dd>'
-    + '<dt>' + esc(t("fSummary"))  + '</dt><dd>' + esc(val(d.summary)) + '</dd>'
+    + '<dt>' + esc(t("fSummary"))  + '</dt><dd>' + txt(d.summary) + '</dd>'
     + '<dt>' + esc(t("fAction"))   + '</dt><dd>' + nf(d.requested_action) + '</dd>'
     + '<dt>' + esc(t("fDeadline")) + '</dt><dd>' + nf(d.deadline_text)
-    +   ' <span class="dim3">(' + esc(d.deadline_date ? t("normalised", {d:d.deadline_date}) : t("notNormalisable")) + ')</span></dd>'
+    +   ' <span class="dim3">(' + esc(d.deadline_date ? t("normalised", {d:ltr(d.deadline_date)}) : t("notNormalisable")) + ')</span></dd>'
     + '<dt>' + esc(t("fUrgency"))  + '</dt><dd>' + urgPill(d.urgency) + '</dd>'
     + '<dt>' + esc(t("fDept"))     + '</dt><dd>' + esc(t(d.department)) + '</dd>'
     + '<dt>' + esc(t("fAmount"))   + '</dt><dd>' + (d.amount != null
@@ -1960,19 +2055,19 @@ function openDoc(id){
     + '</dl></div>';
 
   h += '<div class="ssec"><h4>' + esc(t("secStatus")) + '</h4>' + statusPill(d.status)
-    + (d.review_reason ? '<div class="banner" style="margin-top:11px">' + esc(val(d.review_reason)) + '</div>' : '')
+    + (d.review_reason ? '<div class="banner" style="margin-top:11px">' + reviewReason(d.review_reason) + '</div>' : '')
     + '</div>';
 
   h += '<div class="ssec"><h4>' + esc(t("secRouting")) + '</h4><dl class="kv">'
     + '<dt>' + esc(t("matchedRule")) + '</dt><dd>' + (rule
-        ? '<span class="num">' + rule.rank + '</span> ' + esc(val(rule.label))
+        ? '<span class="num">' + rule.rank + '</span> ' + txt(dbt(rule.label))
         : '<span class="dim3">' + esc(t("none")) + '</span>') + '</dd>'
     + '<dt>' + esc(t("assignedTo")) + '</dt><dd>' + esc(personName(d.assigned_to)) + '</dd>'
     + '</dl></div>';
 
   h += '<div class="ssec"><h4>' + esc(t("secResult")) + '</h4><dl class="kv">'
     + '<dt>' + esc(t("taskW")) + '</dt><dd>' + (task
-        ? esc(val(task.title)) + ' ' + taskPill(task.status)
+        ? txt(task.title) + ' ' + taskPill(task.status)
         : '<span class="dim3">' + esc(t("noneCreated")) + '</span>') + '</dd>'
     + '<dt>' + esc(t("notified")) + '</dt><dd>' + (notes.length
         ? notes.map(function(n){

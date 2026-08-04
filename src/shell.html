@@ -7,7 +7,7 @@
 <style>
 :root{
   --paper:#F1F4F3; --surface:#FFFFFF; --sunk:#E8ECEA; --raise:#FFFFFF;
-  --ink:#121816; --ink-2:#4A5451; --ink-3:#7C8683;
+  --ink:#121816; --ink-2:#4A5451; --ink-3:#68716E;
   --rule:#DBE1DE; --rule-2:#C1C8C5;
   --accent:#0D5C52; --accent-ink:#FFFFFF; --accent-soft:#DCEAE6;
   --todo-fg:#5D6965; --todo-bd:#BFC7C3;
@@ -24,7 +24,7 @@
 }
 @media (prefers-color-scheme:dark){:root{
   --paper:#0E1312; --surface:#171C1A; --sunk:#121716; --raise:#1C2220;
-  --ink:#E6ECE9; --ink-2:#98A39F; --ink-3:#6A7571;
+  --ink:#E6ECE9; --ink-2:#98A39F; --ink-3:#8A9591;
   --rule:#272E2B; --rule-2:#38403C;
   --accent:#4FBFA9; --accent-ink:#05221E; --accent-soft:#142E29;
   --todo-fg:#98A39F; --todo-bd:#38403C;
@@ -39,7 +39,7 @@
 }}
 :root[data-theme="dark"]{
   --paper:#0E1312; --surface:#171C1A; --sunk:#121716; --raise:#1C2220;
-  --ink:#E6ECE9; --ink-2:#98A39F; --ink-3:#6A7571;
+  --ink:#E6ECE9; --ink-2:#98A39F; --ink-3:#8A9591;
   --rule:#272E2B; --rule-2:#38403C;
   --accent:#4FBFA9; --accent-ink:#05221E; --accent-soft:#142E29;
   --todo-fg:#98A39F; --todo-bd:#38403C;
@@ -54,7 +54,7 @@
 }
 :root[data-theme="light"]{
   --paper:#F1F4F3; --surface:#FFFFFF; --sunk:#E8ECEA; --raise:#FFFFFF;
-  --ink:#121816; --ink-2:#4A5451; --ink-3:#7C8683;
+  --ink:#121816; --ink-2:#4A5451; --ink-3:#68716E;
   --rule:#DBE1DE; --rule-2:#C1C8C5;
   --accent:#0D5C52; --accent-ink:#FFFFFF; --accent-soft:#DCEAE6;
   --todo-fg:#5D6965; --todo-bd:#BFC7C3;
@@ -100,7 +100,7 @@ a{color:var(--accent)}
 
 /* Destructive, so it does not borrow the accent colour the rest of the
    chrome uses. It stays quiet until hovered. */
-.btn-reset{border:1px solid var(--rule);background:transparent;color:var(--ink-3);
+.btn-reset{border:1px solid var(--rule);background:transparent;color:var(--ink-2);
   border-radius:8px;padding:7px 11px;font:inherit;font-size:12px;font-weight:500;
   cursor:pointer;white-space:nowrap;transition:color .12s,border-color .12s,background .12s}
 .btn-reset:hover:not(:disabled){color:var(--stuck-fg);border-color:var(--stuck-fg);background:var(--stuck-bg)}
@@ -117,7 +117,7 @@ a{color:var(--accent)}
   font-size:13.5px;color:var(--ink-3);white-space:nowrap;margin-bottom:-1px}
 .tabs button:hover{color:var(--ink)}
 .tabs button.on{color:var(--ink);border-bottom-color:var(--accent);font-weight:500}
-.tabs b{display:inline-block;margin-inline-start:6px;background:var(--sunk);color:var(--ink-3);
+.tabs b{display:inline-block;margin-inline-start:6px;background:var(--sunk);color:var(--ink-2);
   border-radius:999px;padding:0 6px;font-size:11px;font-weight:500;line-height:17px;vertical-align:1px}
 .tabs button.on b{background:var(--accent-soft);color:var(--accent)}
 
@@ -185,7 +185,11 @@ table.t tbody tr.click:hover{background:var(--sunk)}
 
 /* ---- flow ---- */
 .stage{background:var(--surface);border:1px solid var(--rule);border-radius:12px;padding:14px 16px}
+/* A skipped stage is dimmed as a whole, which stacked with --ink-2 to land
+   under 3:1 in dark mode. Promoting the body text one step keeps the stage
+   reading as inactive while its sentence stays legible. */
 .stage.skip{opacity:.55}
+.stage.skip .dim{color:var(--ink)}
 .stagehd{display:flex;flex-wrap:wrap;align-items:center;gap:9px;margin-bottom:10px}
 .stepn{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;
   border-radius:50%;background:var(--sunk);color:var(--ink-3);font-size:11.5px;font-weight:500;flex:none;
@@ -199,7 +203,9 @@ table.t tbody tr.click:hover{background:var(--sunk)}
   border-bottom:1px solid var(--rule);font-size:13px}
 .rulerow:last-of-type{border-bottom:0}
 .rulerow .mk{font-family:var(--mono);font-size:11px;min-width:58px;flex:none;color:var(--ink-3)}
-.rulerow.win{color:var(--done-bg)} .rulerow.win .mk{color:var(--done-bg)}
+/* --done-bg is a fill, not a foreground: on the dark surface it measured
+   2.97:1. --ok-fg is the token meant to be read, and it flips with the theme. */
+.rulerow.win{color:var(--ok-fg)} .rulerow.win .mk{color:var(--ok-fg)}
 .rulerow.trip{color:var(--warn-fg)} .rulerow.trip .mk{color:var(--warn-fg)}
 .rulerow .why{margin-inline-start:auto;color:var(--ink-3);font-size:12.5px}
 
@@ -207,7 +213,7 @@ table.t tbody tr.click:hover{background:var(--sunk)}
 .mailbox{background:var(--surface);border:1px solid var(--rule);border-radius:12px;overflow:hidden;box-shadow:var(--shadow)}
 .mailhd{padding:13px 16px;border-bottom:1px solid var(--rule);background:var(--sunk);font-size:13px}
 .mailhd .row{display:flex;gap:10px;padding:2px 0}
-.mailhd .row>span:first-child{color:var(--ink-3);width:64px;flex:none;font-size:12px;padding-top:1px}
+.mailhd .row>span:first-child{color:var(--ink-2);width:64px;flex:none;font-size:12px;padding-top:1px}
 .mailbody{padding:16px;white-space:pre-wrap;font-size:13.5px;line-height:1.7;
   font-family:var(--mono);unicode-bidi:plaintext}
 [dir="rtl"] .mailbody{font-family:var(--sans)}

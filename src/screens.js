@@ -65,16 +65,24 @@ function renderFlow(){
     + docPicker(d.id, "setFlowDoc")
     + '<span class="pill">' + esc(t(d.channel)) + '</span>' + statusPill(d.status) + '</div>';
 
-  h += stage(1, t("st1" + d.channel), "WF-" + (isDrive ? "1" : d.channel === "form" ? "2" : "3"), true,
+  /* A Drive file carries no record of which of the two intakes read it - both
+   * use the Drive id as source_ref, which is the point. Naming both is honest;
+   * naming one would be a guess. */
+  h += stage(1, t("st1" + d.channel), isDrive ? "WF-1 · WF-6" : d.channel === "form" ? "WF-2" : "WF-3", true,
       '<dl class="kv"><dt>' + esc(t("whatFired")) + '</dt><dd>' + esc(t("fired" + d.channel.charAt(0).toUpperCase() + d.channel.slice(1))) + '</dd>'
     + '<dt>' + esc(t("sourceRef")) + '</dt><dd class="mono dim">' + esc(ltr(d.source_ref)) + '</dd>'
     + '<dt>' + esc(t("received")) + '</dt><dd class="num">' + fmtWhen(d.received_at) + '</dd></dl>');
 
-  h += conn() + stage(2, isDrive ? t("st2drive") : t("st2other"), "WF-1..3", true,
+  h += conn() + stage(2, isDrive ? t("st2drive") : t("st2other"), "WF-1..3, WF-6", true,
       '<div class="dim">' + esc(isDrive ? t("st2driveB") : t("st2otherB")) + '</div>');
 
-  h += conn() + stage(3, t("st3"), "WF-1..3", true,
-      '<div class="mono dim" style="line-height:1.9">'
+  h += conn() + stage(3, t("st3"), "WF-1..3, WF-6", true,
+      /* dir="ltr" is load-bearing. This is a code listing, and in an RTL
+       * paragraph the two latin runs on each line are placed right-to-left
+       * relative to one another: "source_ref = 1vav6Bx" reads back as
+       * "1vav6Bx = source_ref". Isolating the value made it worse, not better,
+       * because an isolate is what turns the value into a reorderable unit. */
+      '<div class="mono dim" dir="ltr" style="line-height:1.9;text-align:start">'
     + 'channel = ' + esc(d.channel) + '<br>'
     + 'source_ref = ' + esc(ltr(d.source_ref)) + '<br>'
     + 'file_name = ' + esc(ltr(d.file_name)) + '<br>'
@@ -86,7 +94,7 @@ function renderFlow(){
       '<dl class="kv">'
     + '<dt>document_type</dt><dd><span class="pill">' + esc(t(d.document_type)) + '</span></dd>'
     + '<dt>sender_or_company</dt><dd>' + nf(d.sender_or_company) + '</dd>'
-    + '<dt>summary</dt><dd>' + esc(val(d.summary)) + '</dd>'
+    + '<dt>summary</dt><dd>' + txt(d.summary) + '</dd>'
     + '<dt>requested_action</dt><dd>' + nf(d.requested_action) + '</dd>'
     + '<dt>deadline</dt><dd>' + nf(d.deadline_text) + '</dd>'
     + '<dt>urgency</dt><dd>' + urgPill(d.urgency) + '</dd>'
@@ -109,20 +117,20 @@ function renderFlow(){
       trace.map(function(x){
         return '<div class="rulerow' + (x.matched ? " win" : "") + '">'
           + '<span class="mk num">' + x.rule.rank + '</span>'
-          + '<span>' + esc(val(x.rule.label)) + '</span>'
+          + '<span>' + txt(dbt(x.rule.label)) + '</span>'
           + '<span class="why">' + esc(x.matched ? t("match") : x.why) + '</span></div>';
       }).join("")
     + (res
-        ? '<div style="margin-top:12px">' + esc(t("goesTo")) + ' <b>' + esc(val(res.person.full_name)) + '</b> '
-          + '<span class="dim3">' + esc(val(res.person.role_title)) + '</span>'
+        ? '<div style="margin-top:12px">' + esc(t("goesTo")) + ' <b>' + txt(res.person.full_name) + '</b> '
+          + '<span class="dim3">' + txt(dbt(res.person.role_title)) + '</span>'
           + (res.viaBackup ? '<div class="dim" style="font-size:12.5px;margin-top:3px">'
-              + esc(t("awayNote", { a:val(res.viaBackup.full_name), b:res.viaBackup.away_until })) + '</div>' : '')
+              + esc(t("awayNote", { a:ltr(val(res.viaBackup.full_name)), b:ltr(res.viaBackup.away_until) })) + '</div>' : '')
           + '</div>'
         : '<div class="banner" style="margin-top:11px">' + esc(t("noRule")) + '</div>'));
 
   h += conn() + stage(8, t("st8"), "WF-4", !!task,
       task
-        ? '<dl class="kv"><dt>' + esc(t("cTask")) + '</dt><dd>' + esc(val(task.title)) + '</dd>'
+        ? '<dl class="kv"><dt>' + esc(t("cTask")) + '</dt><dd>' + txt(task.title) + '</dd>'
           + '<dt>owner</dt><dd class="mono">' + esc(ltr(task.owner)) + '</dd>'
           + '<dt>' + esc(t("cPriority")) + '</dt><dd>' + priPill(task.priority) + '</dd>'
           + '<dt>' + esc(t("cDue")) + '</dt><dd>' + (task.due_date
@@ -138,7 +146,7 @@ function renderFlow(){
     + '<div style="margin-top:11px"><button class="btn btn-sm" onclick="setMailDoc(\'' + d.id + '\');go(\'emails\')">'
     + esc(t("seeEmail")) + '</button></div>');
 
-  h += conn() + stage(11, t("st11"), "WF-1", isDrive,
+  h += conn() + stage(11, t("st11"), "WF-1 · WF-6", isDrive,
       '<div class="dim">' + esc(isDrive ? t("st11b") : t("st11skip")) + '</div>');
 
   return h;
@@ -159,7 +167,7 @@ function renderInbox(){
 
   var peopleOpts = '<option value="">' + esc(t("anyone")) + '</option>' + db.people().map(function(p){
     return '<option value="' + p.id + '"' + (p.id === f.assignee ? ' selected' : '') + '>'
-         + esc(val(p.full_name)) + '</option>';
+         + txt(p.full_name) + '</option>';
   }).join("");
 
   var body = rows.map(function(d){
@@ -207,7 +215,7 @@ function renderReview(){
       +   '<span class="pill">' + esc(t(d.document_type)) + '</span>' + urgPill(d.urgency)
       +   '<span class="dim3 num nowrap" style="margin-inline-start:auto;font-size:12.5px">' + fmtWhen(d.received_at) + '</span>'
       + '</div>'
-      + '<div class="banner" style="margin:12px 0">' + esc(val(d.review_reason)) + '</div>'
+      + '<div class="banner" style="margin:12px 0">' + reviewReason(d.review_reason) + '</div>'
       + '<dl class="kv">'
       +   '<dt>' + esc(t("fSender"))     + '</dt><dd>' + nf(d.sender_or_company) + '</dd>'
       +   '<dt>' + esc(t("fAction"))     + '</dt><dd>' + nf(d.requested_action) + '</dd>'
@@ -241,8 +249,8 @@ function renderTasks(){
     var rows = mine.map(function(x){
       var d = x.document_id ? byId(db.documents(), x.document_id) : null;
       return '<tr' + (d ? ' class="click" onclick="openDoc(\'' + d.id + '\')"' : '') + '>'
-        + '<td><div>' + esc(val(x.title)) + '</div>'
-        +   '<div class="dim3" style="font-size:12px;margin-top:2px">' + esc(val(x.ai_summary)) + '</div></td>'
+        + '<td><div>' + txt(x.title) + '</div>'
+        +   '<div class="dim3" style="font-size:12px;margin-top:2px">' + txt(x.ai_summary) + '</div></td>'
         + '<td class="nowrap">' + priPill(x.priority) + '</td>'
         + '<td class="nowrap">' + taskPill(x.status) + '</td>'
         + '<td class="nowrap dim num">' + (x.due_date ? fmtDate(x.due_date)
@@ -251,8 +259,8 @@ function renderTasks(){
     }).join("");
     return '<div style="margin-bottom:20px">'
       + '<div style="display:flex;align-items:baseline;gap:9px;margin-bottom:8px">'
-      +   '<b style="font-size:14.5px">' + esc(val(p.full_name)) + '</b>'
-      +   '<span class="dim3" style="font-size:12.5px">' + esc(val(p.role_title)) + ' · ' + esc(t(p.department)) + '</span>'
+      +   '<b style="font-size:14.5px">' + txt(p.full_name) + '</b>'
+      +   '<span class="dim3" style="font-size:12.5px">' + txt(dbt(p.role_title)) + ' · ' + esc(t(p.department)) + '</span>'
       + '</div>'
       + panel('<table class="t"><thead><tr>'
           + ['cTask','cPriority','cStatus','cDue','cFrom'].map(function(k){ return '<th>' + esc(t(k)) + '</th>'; }).join("")
@@ -305,15 +313,15 @@ function renderPeople(){
     var bk = byId(db.people(), p.backup_person);
     var load = db.tasks().filter(function(x){ return x.assigned_to === p.id && x.status !== "done"; }).length;
     return '<tr>'
-      + '<td><div>' + esc(val(p.full_name)) + '</div>'
+      + '<td><div>' + txt(p.full_name) + '</div>'
       +   '<div class="dim3 mono" style="font-size:12px">' + esc(ltr(p.slug)) + '</div></td>'
-      + '<td>' + esc(val(p.role_title)) + '</td>'
+      + '<td>' + txt(dbt(p.role_title)) + '</td>'
       + '<td class="nowrap">' + esc(t(p.department)) + '</td>'
       + '<td class="mono dim">' + esc(ltr(p.email)) + '</td>'
       + '<td class="nowrap">' + (away
-          ? '<span class="pill p-me">' + esc(t("awayUntil", {d:p.away_until})) + '</span>'
+          ? '<span class="pill p-me">' + esc(t("awayUntil", {d:ltr(p.away_until)})) + '</span>'
           : '<span class="pill p-ok">' + esc(t("available")) + '</span>') + '</td>'
-      + '<td class="nowrap dim">' + (bk ? esc(val(bk.full_name)) : "—") + '</td>'
+      + '<td class="nowrap dim">' + (bk ? txt(bk.full_name) : "—") + '</td>'
       + '<td class="nowrap num">' + load + '</td></tr>';
   }).join("");
 
@@ -333,12 +341,16 @@ function renderRules(){
   var rows = rules.map(function(r){
     return '<tr>'
       + '<td class="num nowrap">' + r.rank + '</td>'
-      + '<td>' + esc(val(r.label)) + '</td>'
+      + '<td>' + txt(dbt(r.label)) + '</td>'
       + '<td class="nowrap">' + (r.match_channel ? esc(t(r.match_channel)) : anyC) + '</td>'
       + '<td class="nowrap">' + (r.match_doc_type ? '<span class="pill">' + esc(t(r.match_doc_type)) + '</span>' : anyC) + '</td>'
       + '<td class="nowrap">' + (r.match_department ? esc(t(r.match_department)) : anyC) + '</td>'
       + '<td class="nowrap">' + (r.match_urgency ? urgPill(r.match_urgency) : anyC) + '</td>'
-      + '<td class="nowrap num">' + (r.min_amount != null ? "&ge; " + money(r.min_amount) : anyC) + '</td>'
+      /* Bidi mirrors ≥ into ≤ in an RTL cell. That is correct typography and a
+       * dangerous rule: "≥ 5,000" is the difference between the manager seeing
+       * a large invoice and never seeing one. The isolate pins it LTR. */
+      + '<td class="nowrap num">' + (r.min_amount != null
+          ? esc(ltr("≥ " + money(r.min_amount))) : anyC) + '</td>'
       + '<td class="nowrap">' + esc(personName(r.assign_to)) + '</td></tr>';
   }).join("");
 
@@ -352,11 +364,11 @@ function renderRules(){
   } else {
     var r = resolvePerson(hit.assign_to, today());
     res = '<dl class="kv">'
-      + '<dt>' + esc(t("ruleLbl")) + '</dt><dd><span class="num">' + hit.rank + '</span> &nbsp;' + esc(val(hit.label)) + '</dd>'
-      + '<dt>' + esc(t("goesTo")) + '</dt><dd><b>' + esc(val(r.person.full_name)) + '</b> '
-      +   '<span class="dim3">' + esc(val(r.person.role_title)) + '</span></dd>'
+      + '<dt>' + esc(t("ruleLbl")) + '</dt><dd><span class="num">' + hit.rank + '</span> &nbsp;' + txt(dbt(hit.label)) + '</dd>'
+      + '<dt>' + esc(t("goesTo")) + '</dt><dd><b>' + txt(r.person.full_name) + '</b> '
+      +   '<span class="dim3">' + txt(dbt(r.person.role_title)) + '</span></dd>'
       + (r.viaBackup ? '<dt>' + esc(t("why")) + '</dt><dd class="dim">'
-          + esc(t("awayNote", { a:val(r.viaBackup.full_name), b:r.viaBackup.away_until })) + '</dd>' : '')
+          + esc(t("awayNote", { a:ltr(val(r.viaBackup.full_name)), b:ltr(r.viaBackup.away_until) })) + '</dd>' : '')
       + '</dl>';
   }
 
@@ -400,7 +412,7 @@ function renderDash(){
   var loadRows = people.map(function(p){
     var mine = tasks.filter(function(x){ return x.assigned_to === p.id && x.status !== "done"; });
     var urg = mine.filter(function(x){ return x.priority === "urgent"; }).length;
-    return '<tr><td>' + esc(val(p.full_name)) + '</td>'
+    return '<tr><td>' + txt(p.full_name) + '</td>'
       + '<td class="nowrap num">' + mine.length + '</td>'
       + '<td class="nowrap">' + (urg ? '<span class="pill p-hi">' + urg + '</span>'
           : '<span class="dim3 num">0</span>') + '</td></tr>';
@@ -444,10 +456,10 @@ function openDoc(id){
   h += '<div class="ssec"><h4>' + esc(t("secModel")) + '</h4><dl class="kv">'
     + '<dt>' + esc(t("fType"))     + '</dt><dd><span class="pill">' + esc(t(d.document_type)) + '</span></dd>'
     + '<dt>' + esc(t("fSender"))   + '</dt><dd>' + nf(d.sender_or_company) + '</dd>'
-    + '<dt>' + esc(t("fSummary"))  + '</dt><dd>' + esc(val(d.summary)) + '</dd>'
+    + '<dt>' + esc(t("fSummary"))  + '</dt><dd>' + txt(d.summary) + '</dd>'
     + '<dt>' + esc(t("fAction"))   + '</dt><dd>' + nf(d.requested_action) + '</dd>'
     + '<dt>' + esc(t("fDeadline")) + '</dt><dd>' + nf(d.deadline_text)
-    +   ' <span class="dim3">(' + esc(d.deadline_date ? t("normalised", {d:d.deadline_date}) : t("notNormalisable")) + ')</span></dd>'
+    +   ' <span class="dim3">(' + esc(d.deadline_date ? t("normalised", {d:ltr(d.deadline_date)}) : t("notNormalisable")) + ')</span></dd>'
     + '<dt>' + esc(t("fUrgency"))  + '</dt><dd>' + urgPill(d.urgency) + '</dd>'
     + '<dt>' + esc(t("fDept"))     + '</dt><dd>' + esc(t(d.department)) + '</dd>'
     + '<dt>' + esc(t("fAmount"))   + '</dt><dd>' + (d.amount != null
@@ -456,19 +468,19 @@ function openDoc(id){
     + '</dl></div>';
 
   h += '<div class="ssec"><h4>' + esc(t("secStatus")) + '</h4>' + statusPill(d.status)
-    + (d.review_reason ? '<div class="banner" style="margin-top:11px">' + esc(val(d.review_reason)) + '</div>' : '')
+    + (d.review_reason ? '<div class="banner" style="margin-top:11px">' + reviewReason(d.review_reason) + '</div>' : '')
     + '</div>';
 
   h += '<div class="ssec"><h4>' + esc(t("secRouting")) + '</h4><dl class="kv">'
     + '<dt>' + esc(t("matchedRule")) + '</dt><dd>' + (rule
-        ? '<span class="num">' + rule.rank + '</span> ' + esc(val(rule.label))
+        ? '<span class="num">' + rule.rank + '</span> ' + txt(dbt(rule.label))
         : '<span class="dim3">' + esc(t("none")) + '</span>') + '</dd>'
     + '<dt>' + esc(t("assignedTo")) + '</dt><dd>' + esc(personName(d.assigned_to)) + '</dd>'
     + '</dl></div>';
 
   h += '<div class="ssec"><h4>' + esc(t("secResult")) + '</h4><dl class="kv">'
     + '<dt>' + esc(t("taskW")) + '</dt><dd>' + (task
-        ? esc(val(task.title)) + ' ' + taskPill(task.status)
+        ? txt(task.title) + ' ' + taskPill(task.status)
         : '<span class="dim3">' + esc(t("noneCreated")) + '</span>') + '</dd>'
     + '<dt>' + esc(t("notified")) + '</dt><dd>' + (notes.length
         ? notes.map(function(n){
