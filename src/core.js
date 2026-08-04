@@ -17,12 +17,14 @@ var T = {
             + "Files in Office Processed move back to Office Inbox.\n\nContinue?",
     resetOk:  "Cleared. Reloading…",
     resetFail: "Reset failed: ",
+    resetUnsure: "No answer came back, so whether the reset ran is unknown — n8n keeps working after the browser gives up. Reloading to show what the database actually holds. Reason: ",
 
     scanBtn:  "Scan inbox",
     scanBusy: "Looking…",
     scanRun:  "Processing {n}…",
     scanNone: "Office Inbox is empty. Drop the files in, then scan again.",
     scanFail: "Scan failed: ",
+    scanUnsure: "No answer came back, so whether the scan started is unknown — WF-6 can still be reading the folder. Watching for documents to arrive; the page reloads once they stop coming. Reason: ",
 
     emptyTitle: "No documents yet",
     emptyBody:  "Drop files into Office Inbox in Google Drive, then press Scan inbox.",
@@ -145,6 +147,14 @@ var T = {
     personInactiveHint: "An inactive person keeps their history and their name on past work. New work goes to their backup, so this is the safe way to remove someone.",
     personFail: "Could not save: ",
     personEditHint: "Click a person to edit them. Nothing already assigned is moved.",
+
+    /* Shared by the rule, person and department editors. The *Fail keys above
+     * are for a refusal - the workflow answered and the answer was no. These
+     * three are for the case where no answer came back at all, which is not
+     * the same thing and must not be reported as one. */
+    saveUnsure: "No answer came back, so whether this saved is unknown — the workflow can finish after the browser has given up. The table has been re-read from the database, so check whether the change is there. Reason: ",
+    saveOffline: " The database could not be re-read either, so nothing on screen is current. Check the connection and reload.",
+    saveNoRefresh: "Saved. The table could not be re-read, so the page will reload: ",
     /* departments */
     deptsH: "Departments",
     deptsSub: "A department is a fixed slot with a name you choose. Open one, call it what your office calls it, and the model starts filing documents under it. Close it and no new document can be — the ones already filed keep it.",
@@ -218,12 +228,14 @@ var T = {
             + "קבצים ב‑Office Processed יחזרו ל‑Office Inbox.\n\nלהמשיך?",
     resetOk:  "אופס. טוען מחדש…",
     resetFail: "האיפוס נכשל: ",
+    resetUnsure: "לא חזרה תשובה, ולכן לא ידוע אם האיפוס רץ ‑ n8n ממשיך לעבוד גם אחרי שהדפדפן ויתר. טוענים מחדש כדי להראות מה המסד באמת מכיל. הסיבה: ",
 
     scanBtn:  "סרוק תיבה",
     scanBusy: "בודק…",
     scanRun:  "מעבד {n}…",
     scanNone: "התיקייה Office Inbox ריקה. הכניסו קבצים ואז סרקו שוב.",
     scanFail: "הסריקה נכשלה: ",
+    scanUnsure: "לא חזרה תשובה, ולכן לא ידוע אם הסריקה התחילה ‑ WF-6 עשוי עדיין לקרוא את התיקייה. עוקבים אחרי מסמכים שנכנסים; הדף ייטען מחדש כשהם יפסיקו להגיע. הסיבה: ",
 
     emptyTitle: "אין עדיין מסמכים",
     emptyBody:  "הכניסו קבצים לתיקייה Office Inbox בגוגל דרייב ואז לחצו על ״סרוק תיבה״.",
@@ -337,6 +349,9 @@ var T = {
     personInactiveHint: "אדם לא פעיל שומר על ההיסטוריה ועל שמו בעבודות קודמות. עבודה חדשה עוברת למחליף, ולכן זו הדרך הבטוחה להסיר מישהו.",
     personFail: "לא נשמר: ",
     personEditHint: "לחיצה על אדם פותחת אותו לעריכה. שום דבר שכבר הוקצה לא זז.",
+    saveUnsure: "לא חזרה תשובה, ולכן לא ידוע אם זה נשמר ‑ התהליך יכול להסתיים גם אחרי שהדפדפן ויתר. הטבלה נקראה מחדש מהמסד, אז אפשר לבדוק אם השינוי שם. הסיבה: ",
+    saveOffline: " גם קריאת המסד נכשלה, ולכן שום דבר במסך אינו עדכני. בדקו את החיבור וטענו מחדש.",
+    saveNoRefresh: "נשמר. לא הצלחנו לקרוא מחדש את הטבלה, ולכן הדף ייטען מחדש: ",
     deptsH: "מחלקות",
     deptsSub: "מחלקה היא מקום קבוע עם שם שאתם בוחרים. פותחים אחת, קוראים לה איך שקוראים לה במשרד, והמודל מתחיל לתייק אליה מסמכים. סוגרים אותה ואף מסמך חדש לא ייכנס ‑ אלה שכבר תויקו נשארים.",
     deptOpen: "פתוחה", deptClosed: "סגורה", deptEdit: "שינוי שם מחלקה",
@@ -593,8 +608,15 @@ function postHook(url, payload){
     body: JSON.stringify(payload || {})
   }).then(function(r){
     return r.json().catch(function(){ return null; }).then(function(d){
-      if (!r.ok || !d || d.success !== true)
-        throw new Error((d && (d.message || d.error)) || ("HTTP " + r.status));
+      if (!r.ok || !d || d.success !== true){
+        /* A body carrying success:false is the workflow refusing on purpose and
+         * saying why: nothing was written. Anything else - an unparseable body,
+         * no body, a gateway error - means we never heard back. The caller has
+         * to tell those apart, because only the first one proves nothing saved. */
+        var err = new Error((d && (d.message || d.error)) || ("HTTP " + r.status));
+        err.refused = !!(d && d.success === false);
+        throw err;
+      }
       return d;
     });
   });
@@ -614,9 +636,18 @@ function doReset(){
      * the database holds, with no chance of the two drifting apart. */
     location.reload();
   }).catch(function(e){
-    alert(t("resetFail") + (e && e.message ? e.message : String(e)));
-    btn.disabled = false;
-    btn.textContent = t("resetBtn");
+    var why = e && e.message ? e.message : String(e);
+    if (e && e.refused){
+      alert(t("resetFail") + why);
+      btn.disabled = false;
+      btn.textContent = t("resetBtn");
+      return;
+    }
+    /* No answer is not a failure. WF-5 may have cleared everything after the
+     * browser stopped waiting, and "reset failed" would then be false. The
+     * reload settles it: the page shows whatever the database now holds. */
+    alert(t("resetUnsure") + why);
+    location.reload();
   });
 }
 
@@ -646,7 +677,17 @@ function doScan(){
     btn.textContent = t("scanRun", { n: found });
     awaitDocuments(countDocuments() + found);
   }).catch(function(e){
-    alert(t("scanFail") + (e && e.message ? e.message : String(e)));
+    var why = e && e.message ? e.message : String(e);
+    if (!e || !e.refused){
+      /* WF-6 answers with a count before it processes anything, so losing the
+       * answer tells us nothing about whether it is running. We were never
+       * given a target, so watch until the count stops moving instead. */
+      alert(t("scanUnsure") + why);
+      btn.textContent = t("scanBusy");
+      awaitSettled(countDocuments());
+      return;
+    }
+    alert(t("scanFail") + why);
     btn.disabled = false;
     btn.textContent = t("scanBtn");
   });
@@ -695,17 +736,44 @@ function personPreview(draft){
 
 /* One shape for both editors: post, re-read the table, redraw. Re-reading
  * rather than patching the local array means the screen shows what the database
- * holds, including anything the workflow normalised on the way through. */
+ * holds, including anything the workflow normalised on the way through.
+ *
+ * Three outcomes, not two. A refusal is an answer - the workflow looked, said
+ * no, and gave a reason worth reading; nothing was written. A transport failure
+ * is not an answer at all. n8n keeps running after the browser stops waiting,
+ * so a slow network produces exactly the case where the write lands and the
+ * page is told nothing. Calling that "not saved" is a claim we cannot support,
+ * so instead we re-read the table and let the user see what is actually there. */
 function sendVia(url, table, query, target, failKey, payload, onDone){
+  function reread(){
+    return fetchTable(table, query).then(function(rows){ live[target] = rows; });
+  }
+  function why(e){ return e && e.message ? e.message : String(e); }
+
   postHook(url, payload).then(function(){
-    return fetchTable(table, query).then(function(rows){
-      live[target] = rows;
+    return reread().then(function(){
       closeSheet();
       render();
+    }, function(e){
+      /* The post was acknowledged, so it saved. Only the re-read failed, and
+       * saying "could not save" here would be plainly false. */
+      alert(t("saveNoRefresh") + why(e));
+      location.reload();
     });
   }).catch(function(e){
-    alert(t(failKey) + (e && e.message ? e.message : String(e)));
-    if (onDone) onDone();
+    if (e && e.refused){
+      alert(t(failKey) + why(e));
+      if (onDone) onDone();
+      return;
+    }
+    reread().then(function(){
+      alert(t("saveUnsure") + why(e));
+      closeSheet();
+      render();
+    }, function(){
+      alert(t("saveUnsure") + why(e) + t("saveOffline"));
+      if (onDone) onDone();
+    });
   });
 }
 
@@ -743,6 +811,25 @@ function awaitDocuments(target){
     setTimeout(function(){
       fetchTable("documents", "select=id").then(function(rows){
         if (rows.length >= target || ++tries >= MAX) location.reload();
+        else poll();
+      }).catch(function(){
+        if (++tries >= MAX) location.reload(); else poll();
+      });
+    }, 4000);
+  })();
+}
+
+/* The same wait, for when nobody told us how many rows to expect. Three quiet
+ * polls in a row means the run has finished; a count that never moves means it
+ * never started, and the timeout reloads on that too rather than spinning. */
+function awaitSettled(from){
+  var tries = 0, MAX = 45, quiet = 0, last = from;
+  (function poll(){
+    setTimeout(function(){
+      fetchTable("documents", "select=id").then(function(rows){
+        if (rows.length !== last){ last = rows.length; quiet = 0; }
+        else quiet++;
+        if ((quiet >= 3 && last > from) || ++tries >= MAX) location.reload();
         else poll();
       }).catch(function(){
         if (++tries >= MAX) location.reload(); else poll();
