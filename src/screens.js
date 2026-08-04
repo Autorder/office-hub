@@ -102,7 +102,17 @@ function renderFlow(){
     + 'text = <span class="dim3">' + esc(t("theBody")) + '</span></div>'
     + '<div class="dim3" style="font-size:12.5px;margin-top:9px">' + esc(t("st3note")) + '</div>');
 
-  h += conn() + stage(4, t("st4"), "WF-4", true,
+  /* Reads the live table, which is the point: the model is shown names the
+   * office chose, not an enum baked into the prompt. Falls back to the six the
+   * schema shipped with when the table has not been created. */
+  var open = deptCodes();
+  h += conn() + stage(4, t("stDept"), "WF-4", true,
+      '<dl class="kv"><dt>' + esc(t("stDeptOpen")) + '</dt><dd>'
+    + open.map(function(c){ return '<span class="pill">' + esc(deptName(c)) + '</span>'; }).join(" ")
+    + '</dd></dl>'
+    + '<div class="dim" style="margin-top:9px">' + esc(t("stDeptB")) + '</div>');
+
+  h += conn() + stage(5, t("st4"), "WF-4", true,
       '<dl class="kv">'
     + '<dt>document_type</dt><dd><span class="pill">' + esc(t(d.document_type)) + '</span></dd>'
     + '<dt>sender_or_company</dt><dd>' + nf(d.sender_or_company) + '</dd>'
@@ -112,9 +122,10 @@ function renderFlow(){
     + '<dt>urgency</dt><dd>' + urgPill(d.urgency) + '</dd>'
     + '<dt>department</dt><dd>' + txt(deptName(d.department)) + '</dd>'
     + '<dt>amount</dt><dd>' + (d.amount != null ? '<span class="num">' + money(d.amount) + '</span>' : nf(null)) + '</dd>'
-    + '<dt>confidence</dt><dd>' + esc(t(d.confidence)) + '</dd></dl>');
+    + '<dt>confidence</dt><dd>' + esc(t(d.confidence)) + '</dd></dl>'
+    + '<div class="dim3" style="font-size:12.5px;margin-top:9px">' + esc(t("st4note")) + '</div>');
 
-  h += conn() + stage(5, t("st5"), "WF-4", true,
+  h += conn() + stage(6, t("st5"), "WF-4", true,
       checkDetail(d).map(function(c){
         return '<div class="rulerow' + (c.hit ? " trip" : "") + '">'
           + '<span class="mk">' + (c.hit ? esc(t("tripped")) : "—") + '</span>'
@@ -123,9 +134,9 @@ function renderFlow(){
       }).join("")
     + '<div style="margin-top:11px">' + statusPill(d.status) + '</div>');
 
-  h += conn() + stage(6, t("st6"), "WF-4", true, '<div class="dim">' + esc(t("st6b")) + '</div>');
+  h += conn() + stage(7, t("st6"), "WF-4", true, '<div class="dim">' + esc(t("st6b")) + '</div>');
 
-  h += conn() + stage(7, t("st7"), "WF-4", true,
+  h += conn() + stage(8, t("st7"), "WF-4", true,
       trace.map(function(x){
         return '<div class="rulerow' + (x.matched ? " win" : "") + '">'
           + '<span class="mk num">' + x.rule.rank + '</span>'
@@ -136,11 +147,15 @@ function renderFlow(){
         ? '<div style="margin-top:12px">' + esc(t("goesTo")) + ' <b>' + txt(res.person.full_name) + '</b> '
           + '<span class="dim3">' + txt(dbt(res.person.role_title)) + '</span>'
           + (res.viaBackup ? '<div class="dim" style="font-size:12.5px;margin-top:3px">'
-              + esc(t("awayNote", { a:ltr(val(res.viaBackup.full_name)), b:ltr(res.viaBackup.away_until) })) + '</div>' : '')
+              + esc(res.viaBackup.is_active === false
+                  ? t("inactiveNote", { a:ltr(val(res.viaBackup.full_name)) })
+                  : t("awayNote", { a:ltr(val(res.viaBackup.full_name)), b:ltr(res.viaBackup.away_until) }))
+              + '</div>' : '')
           + '</div>'
-        : '<div class="banner" style="margin-top:11px">' + esc(t("noRule")) + '</div>'));
+        : '<div class="banner" style="margin-top:11px">' + esc(t("noRule")) + '</div>')
+    + '<div class="dim3" style="font-size:12.5px;margin-top:11px">' + esc(t("st7note")) + '</div>');
 
-  h += conn() + stage(8, t("st8"), "WF-4", !!task,
+  h += conn() + stage(9, t("st8"), "WF-4", !!task,
       task
         ? '<dl class="kv"><dt>' + esc(t("cTask")) + '</dt><dd>' + txt(task.title) + '</dd>'
           + '<dt>owner</dt><dd class="mono">' + esc(ltr(task.owner)) + '</dd>'
@@ -150,15 +165,15 @@ function renderFlow(){
               : '<span class="notfound">' + esc(t("noDate")) + '</span>') + '</dd></dl>'
         : '<div class="dim">' + esc(t("st8skip")) + '</div>');
 
-  h += conn() + stage(9, t("st9"), "WF-4", true, '<div class="dim">' + esc(t("st9b")) + '</div>');
+  h += conn() + stage(10, t("st9"), "WF-4", true, '<div class="dim">' + esc(t("st9b")) + '</div>');
 
-  h += conn() + stage(10, t("st10"), "WF-4", true,
+  h += conn() + stage(11, t("st10"), "WF-4", true,
       '<div>' + esc(t("tookBranch", { k:t(mail.kind), u:t(d.urgency) })) + '</div>'
     + '<div class="mono dim" style="margin-top:7px">' + esc(ltr(mail.to)) + '</div>'
     + '<div style="margin-top:11px"><button class="btn btn-sm" onclick="setMailDoc(\'' + d.id + '\');go(\'emails\')">'
     + esc(t("seeEmail")) + '</button></div>');
 
-  h += conn() + stage(11, t("st11"), "WF-1 · WF-6", isDrive,
+  h += conn() + stage(12, t("st11"), "WF-1 · WF-6", isDrive,
       '<div class="dim">' + esc(isDrive ? t("st11b") : t("st11skip")) + '</div>');
 
   return h;
