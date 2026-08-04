@@ -94,7 +94,7 @@ function renderFlow(){
        * relative to one another: "source_ref = 1vav6Bx" reads back as
        * "1vav6Bx = source_ref". Isolating the value made it worse, not better,
        * because an isolate is what turns the value into a reorderable unit. */
-      '<div class="mono dim" dir="ltr" style="line-height:1.9;text-align:start">'
+      '<div class="mono dim codeblk" dir="ltr" style="line-height:1.9;text-align:start">'
     + 'channel = ' + esc(d.channel) + '<br>'
     + 'source_ref = ' + esc(ltr(d.source_ref)) + '<br>'
     + 'file_name = ' + esc(ltr(d.file_name)) + '<br>'

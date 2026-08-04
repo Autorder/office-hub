@@ -14,7 +14,7 @@
   --rule:#DBE1DE; --rule-2:#C1C8C5;
   --accent:#0D5C52; --accent-ink:#FFFFFF; --accent-soft:#DCEAE6;
   --todo-fg:#5D6965; --todo-bd:#BFC7C3;
-  --work-bg:#B26B00; --work-fg:#FFFFFF;
+  --work-bg:#A66400; --work-fg:#FFFFFF;
   --done-bg:#3D6B4F; --done-fg:#FFFFFF;
   --stuck-bg:#B03830; --stuck-fg:#FFFFFF;
   --warn-bg:#FBF0DC; --warn-fg:#6B4405; --warn-bd:#E8CE9C;
@@ -61,7 +61,7 @@
   --rule:#DBE1DE; --rule-2:#C1C8C5;
   --accent:#0D5C52; --accent-ink:#FFFFFF; --accent-soft:#DCEAE6;
   --todo-fg:#5D6965; --todo-bd:#BFC7C3;
-  --work-bg:#B26B00; --work-fg:#FFFFFF;
+  --work-bg:#A66400; --work-fg:#FFFFFF;
   --done-bg:#3D6B4F; --done-fg:#FFFFFF;
   --stuck-bg:#B03830; --stuck-fg:#FFFFFF;
   --warn-bg:#FBF0DC; --warn-fg:#6B4405; --warn-bd:#E8CE9C;
@@ -209,6 +209,8 @@ table.t tbody tr.click:hover{background:var(--sunk)}
 .stagehd .wf{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);
   border:1px solid var(--rule-2);border-radius:4px;padding:1px 5px;margin-inline-start:auto}
 .conn{height:14px;border-inline-start:2px solid var(--rule-2);margin-inline-start:26px}
+/* Wide content scrolls inside its own box, the same rule the tables follow. */
+.codeblk{overflow-x:auto}
 .rulerow{display:flex;flex-wrap:wrap;gap:9px;align-items:baseline;padding:6px 0;
   border-bottom:1px solid var(--rule);font-size:13px}
 .rulerow:last-of-type{border-bottom:0}
@@ -1934,7 +1936,7 @@ function renderFlow(){
        * relative to one another: "source_ref = 1vav6Bx" reads back as
        * "1vav6Bx = source_ref". Isolating the value made it worse, not better,
        * because an isolate is what turns the value into a reorderable unit. */
-      '<div class="mono dim" dir="ltr" style="line-height:1.9;text-align:start">'
+      '<div class="mono dim codeblk" dir="ltr" style="line-height:1.9;text-align:start">'
     + 'channel = ' + esc(d.channel) + '<br>'
     + 'source_ref = ' + esc(ltr(d.source_ref)) + '<br>'
     + 'file_name = ' + esc(ltr(d.file_name)) + '<br>'
