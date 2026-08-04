@@ -319,7 +319,81 @@ var mockDb = {
   notifications: function(){ return D.notifications.slice(); }
 };
 
+/* The live source reads the same five tables the n8n workflows write to.
+ *
+ * Every screen calls db.*() synchronously and expects an array back, so the
+ * five tables are fetched once into `live` and served from there. Making the
+ * screens async instead would have touched every render function to solve a
+ * problem that only exists for a few hundred rows.
+ *
+ * Reads only. Nothing in this app writes: routing decisions belong to n8n,
+ * and a browser that could rewrite routing_rules could redirect where money
+ * goes. */
+
+var live = { people:[], routing_rules:[], documents:[], tasks:[], notifications:[] };
+
+var supabaseDb = {
+  kind: "live",
+  people:        function(){ return live.people.slice(); },
+  routingRules:  function(){ return live.routing_rules.slice().sort(function(a,b){ return a.rank - b.rank; }); },
+  documents:     function(){ return live.documents.slice().sort(function(a,b){ return a.received_at < b.received_at ? 1 : -1; }); },
+  tasks:         function(){ return live.tasks.slice(); },
+  notifications: function(){ return live.notifications.slice(); }
+};
+
 var db = mockDb;
+
+function liveConfigured(){
+  var c = window.OFFICE_HUB_CONFIG || {};
+  return !!(c.SUPABASE_URL && c.SUPABASE_PUBLISHABLE_KEY);
+}
+
+function fetchTable(name, query){
+  var c = window.OFFICE_HUB_CONFIG;
+  var url = c.SUPABASE_URL + "/rest/v1/" + name + "?" + (query || "select=*");
+  return fetch(url, { headers: {
+    apikey: c.SUPABASE_PUBLISHABLE_KEY,
+    Authorization: "Bearer " + c.SUPABASE_PUBLISHABLE_KEY
+  }}).then(function(r){
+    if (!r.ok) throw new Error(name + ": HTTP " + r.status);
+    return r.json();
+  });
+}
+
+/* Switches to live data, or leaves the demo dataset in place and says why.
+ * An empty database is not a reason to switch — a blank Inbox looks like a
+ * broken page, and the demo rows are what make the screens explainable. */
+function loadLive(){
+  if (!liveConfigured()) return Promise.resolve(false);
+
+  return Promise.all([
+    fetchTable("people"),
+    fetchTable("routing_rules", "select=*&order=rank.asc"),
+    fetchTable("documents", "select=*&order=received_at.desc"),
+    fetchTable("tasks"),
+    fetchTable("notifications")
+  ]).then(function(r){
+    if (!r[2].length) return false;
+
+    live.people = r[0]; live.routing_rules = r[1];
+    live.documents = r[2]; live.tasks = r[3]; live.notifications = r[4];
+
+    /* n8n writes tasks.document_id but never documents.task_id, so the link
+     * exists in one direction only. The document sheet reads the other, so
+     * fill it in here rather than add a node to the workflow for it. */
+    live.documents.forEach(function(d){
+      if (d.task_id) return;
+      for (var i=0;i<live.tasks.length;i++)
+        if (live.tasks[i].document_id === d.id) { d.task_id = live.tasks[i].id; return; }
+    });
+
+    db = supabaseDb;
+    return true;
+  }).catch(function(e){
+    if (window.console) console.warn("Live data unavailable, showing the demo set:", e.message);
+    return false;
+  });
+}
 
 /* ==================================================== business logic ==== */
 /* These functions are the specification for what n8n must do. They live here
@@ -516,4 +590,12 @@ function boot(){
 
   setTheme(store.get("oh.theme", "") || null);
   setLang(store.get("oh.lang", "en"));
+
+  /* Draw with the demo set first. The page is usable before the network
+   * answers, and stays usable if it never does. */
+  loadLive().then(function(switched){
+    if (!switched) return;
+    document.getElementById("srcPill").textContent = t("srcLive");
+    render();
+  });
 }

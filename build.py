@@ -17,7 +17,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 SRC = ROOT / "src"
 OUT = ROOT / "index.html"
-ORDER = ["data.js", "core.js", "screens.js"]
+ORDER = ["config.js", "data.js", "core.js", "screens.js"]
 
 TAG = re.compile(r'[ \t]*<script src="(?P<f>[^"]+)"></script>\n')
 
