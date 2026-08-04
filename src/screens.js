@@ -338,8 +338,11 @@ function renderRules(){
   var rules = db.routingRules();
   var anyC = '<span class="dim3">' + esc(t("any")) + '</span>';
 
+  var edit = ruleEditable();
+
   var rows = rules.map(function(r){
-    return '<tr>'
+    return '<tr' + (edit ? ' class="click" onclick="openRuleEditor(\'' + r.id + '\')"' : '')
+      +   (r.is_active === false ? ' style="opacity:.5"' : '') + '>'
       + '<td class="num nowrap">' + r.rank + '</td>'
       + '<td>' + txt(dbt(r.label)) + '</td>'
       + '<td class="nowrap">' + (r.match_channel ? esc(t(r.match_channel)) : anyC) + '</td>'
@@ -372,7 +375,10 @@ function renderRules(){
       + '</dl>';
   }
 
-  return head("navRules", "rulesSub")
+  return head("navRules", "rulesSub",
+      edit ? '<button class="btn btn-primary btn-sm" style="margin-inline-start:auto" onclick="openRuleEditor()">'
+             + esc(t("ruleAdd")) + '</button>' : "")
+    + (edit ? '<p class="sub" style="margin-top:-10px">' + esc(t("ruleEditHint")) + '</p>' : "")
     + panel('<table class="t"><thead><tr>'
         + ['cRank','cRule','cChannel','cType','cDept','cUrgency','cAmount','cAssign']
             .map(function(k){ return '<th>' + esc(t(k)) + '</th>'; }).join("")
@@ -387,6 +393,124 @@ function renderRules(){
     +   '<input type="number" placeholder="' + esc(t("amountPh")) + '" value="' + esc(s.amount)
     +     '" style="width:120px" oninput="setSim(\'amount\',this.value)">'
     + '</div><div style="padding:16px 18px">' + res + '</div></div>';
+}
+
+/* ======================================================== rules editor == */
+/* Rendered into the same side sheet the document detail uses, so the scrim,
+ * the Escape key and the close button already work.
+ *
+ * The form is read at submit time rather than re-rendered on every keystroke:
+ * re-rendering would rebuild the inputs and throw away the caret. Only the
+ * preview line updates live, and it updates one span. */
+
+function ruleField(label, inner, hint){
+  return '<div style="margin-bottom:14px">'
+    + '<div class="lbl" style="margin-bottom:5px">' + esc(t(label)) + '</div>' + inner
+    + (hint ? '<div class="dim3" style="font-size:12px;margin-top:5px">' + esc(t(hint)) + '</div>' : '')
+    + '</div>';
+}
+
+function openRuleEditor(id){
+  var r = id ? byId(db.routingRules(), id) : null;
+  var W = 'style="width:100%"';
+
+  /* A new rule is offered the next free hundred rather than a duplicate of an
+   * existing rank, because a clash is the one error the form cannot fix for
+   * you - it has to choose someone's rank to change. */
+  var used = db.routingRules().map(function(x){ return x.rank; });
+  var nextRank = r ? r.rank : Math.min(999, (used.length ? Math.max.apply(null, used) : 0) + 1);
+
+  var sel = function(name, list, cur, anyKey){
+    return '<select id="rf_' + name + '" ' + W + ' oninput="ruleLive()">'
+      + opts(list, cur == null ? "" : cur, anyKey) + '</select>';
+  };
+
+  var h = '<div class="shead"><h3>' + esc(t(r ? "ruleEdit" : "ruleNew")) + '</h3>'
+    + '<button class="xbtn" onclick="closeSheet()" aria-label="Close">&times;</button></div>'
+    + '<div class="ssec">'
+    + ruleField("fLabel", '<input type="text" id="rf_label" maxlength="80" ' + W
+        + ' value="' + esc(r ? val(r.label) : "") + '">', "ruleLabelHint")
+    + ruleField("fRank", '<input type="number" id="rf_rank" min="1" max="999" step="1" ' + W
+        + ' value="' + nextRank + '" oninput="ruleLive()">', "ruleRankHint")
+    + ruleField("fAssign", '<select id="rf_assign" ' + W + '>'
+        + db.people().map(function(p){
+            return '<option value="' + p.id + '"' + (r && r.assign_to === p.id ? ' selected' : '') + '>'
+                 + esc(val(p.full_name)) + ' · ' + esc(dbt(p.role_title)) + '</option>';
+          }).join("") + '</select>')
+    + '</div><div class="ssec">'
+    + '<h4>' + esc(t("ruleConds")) + '</h4>'
+    + ruleField("cChannel",  sel("channel",  D.CHANNELS,    r && r.match_channel,    "anyChannel"))
+    + ruleField("cType",     sel("type",     D.DOC_TYPES,   r && r.match_doc_type,   "anyType"))
+    + ruleField("cDept",     sel("dept",     D.DEPARTMENTS, r && r.match_department, "anyDept"))
+    + ruleField("cUrgency",  sel("urgency",  D.URGENCIES,   r && r.match_urgency,    "anyUrgency"))
+    + ruleField("cAmount",   '<input type="number" id="rf_amount" min="0" step="0.01" ' + W
+        + ' placeholder="' + esc(t("any")) + '" value="'
+        + (r && r.min_amount != null ? esc(r.min_amount) : "") + '" oninput="ruleLive()">')
+    + '<label style="display:flex;gap:8px;align-items:center;font-size:13.5px">'
+    +   '<input type="checkbox" id="rf_active"' + (!r || r.is_active !== false ? ' checked' : '') + '>'
+    +   esc(t("fActive")) + '</label>'
+    + '<div class="dim3" style="font-size:12px;margin-top:12px">' + esc(t("ruleCondHint")) + '</div>'
+    + '</div><div class="ssec">'
+    + '<div class="banner" id="rf_preview"></div>'
+    + '<div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">'
+    +   '<button class="btn btn-primary btn-sm" id="rf_save" onclick="submitRule(' + (r ? "'" + r.id + "'" : "null") + ')">'
+    +     esc(t("ruleSave")) + '</button>'
+    +   '<button class="btn btn-sm" onclick="closeSheet()">' + esc(t("ruleCancel")) + '</button>'
+    +   (r ? '<button class="btn btn-sm" style="margin-inline-start:auto;color:var(--stuck-bg)" '
+            + 'onclick="removeRule(\'' + r.id + '\')">' + esc(t("ruleDelete")) + '</button>' : "")
+    + '</div></div>';
+
+  state.ruleId = r ? r.id : null;
+  document.getElementById("sheet").innerHTML = h;
+  document.getElementById("sheet").classList.add("on");
+  document.getElementById("scrim").classList.add("on");
+  ruleLive();
+}
+
+/* Reads the form as it stands. Kept separate so the preview and the submit
+ * path can never disagree about what the form says. */
+function ruleDraft(id){
+  var v = function(x){ var e = document.getElementById("rf_" + x); return e ? e.value : ""; };
+  var amt = v("amount").trim();
+  return {
+    id: id || null,
+    rank: Number(v("rank")),
+    label: v("label").trim(),
+    match_channel:    v("channel")  || null,
+    match_doc_type:   v("type")     || null,
+    match_department: v("dept")     || null,
+    match_urgency:    v("urgency")  || null,
+    min_amount: amt === "" ? null : Number(amt),
+    assign_to: v("assign"),
+    is_active: document.getElementById("rf_active").checked
+  };
+}
+
+function ruleLive(){
+  var el = document.getElementById("rf_preview");
+  if (!el) return;
+  /* state.ruleId, not null: while editing rule X the draft replaces X in the
+   * ranking. Leaving X in would make the rule compete with itself and the
+   * count would read 0 for every edit. */
+  var p = rulePreview(ruleDraft(state.ruleId));
+  el.textContent = p.win
+    ? t("ruleHits", { n:p.win, m:p.total })
+    : t("ruleHitsNone", { m:p.total });
+}
+
+function submitRule(id){
+  var draft = ruleDraft(id);
+  var btn = document.getElementById("rf_save");
+  btn.disabled = true;
+  btn.textContent = t("ruleSaving");
+  sendRule({ action: id ? "update" : "create", id: id || undefined, rule: draft },
+    function(){ btn.disabled = false; btn.textContent = t("ruleSave"); });
+}
+
+function removeRule(id){
+  var r = byId(db.routingRules(), id);
+  if (!r || !confirm(t("ruleDelAsk", { a: dbt(r.label) }))) return;
+  sendRule({ action: "delete", id: id });
 }
 
 /* =========================================================== dashboard == */

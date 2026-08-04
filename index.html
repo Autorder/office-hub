@@ -343,7 +343,20 @@ window.OFFICE_HUB_CONFIG = {
      the local one. Leave empty to hide the Scan button entirely. */
   N8N_SCAN_WEBHOOK_URL: "https://playing-twig-evergreen.ngrok-free.dev/webhook/office-scan",
 
-  N8N_SCAN_WEBHOOK_URL_LOCAL: "http://localhost:5678/webhook/office-scan"
+  N8N_SCAN_WEBHOOK_URL_LOCAL: "http://localhost:5678/webhook/office-scan",
+
+  /* WF-7 in n8n. The rules editor posts here - create, update and delete.
+
+     The browser does not write to routing_rules itself, and the reason is the
+     key three lines above this one: it is public, so a page that could edit a
+     routing rule would let anyone who opens the URL decide where invoices go.
+     WF-7 holds the service credential, validates every field, and refuses to
+     delete the last catch-all.
+
+     Leave empty to make the Rules screen read-only. */
+  N8N_RULES_WEBHOOK_URL: "https://playing-twig-evergreen.ngrok-free.dev/webhook/office-rules",
+
+  N8N_RULES_WEBHOOK_URL_LOCAL: "http://localhost:5678/webhook/office-rules"
 
 };
 </script>
@@ -885,6 +898,20 @@ var T = {
     simulator: "Simulator",
     simSub: "Pick a classification and see who would receive it - no file upload, no waiting. This runs the exact matching logic the n8n nodes will run.",
     amountPh: "amount", ruleLbl: "Rule", why: "Why",
+
+    /* rules editor */
+    ruleAdd: "Add rule", ruleNew: "New rule", ruleEdit: "Edit rule",
+    ruleConds: "Conditions",
+    ruleLabelHint: "Stored as written. This is the name that appears in the Google Sheet log when this rule decides something, so it stays in one language.",
+    fRank: "Rank", fLabel: "Name", fAssign: "Assign to", fActive: "Active",
+    ruleSave: "Save", ruleSaving: "Saving…", ruleDelete: "Delete", ruleCancel: "Cancel",
+    ruleRankHint: "Lower ranks are checked first. The first rule that matches wins.",
+    ruleCondHint: "Leave a condition on “any” to mean the rule does not care about it. A rule with no conditions at all matches everything, so it only belongs last.",
+    ruleHits: "As written, this rule would win {n} of the {m} documents on file.",
+    ruleHitsNone: "As written, this rule would win none of the {m} documents on file. That may be correct for a rule waiting for a document type nobody has sent yet — or it may mean an earlier rank already takes them.",
+    ruleDelAsk: "Delete “{a}”?\n\nDocuments it used to catch will fall through to the next rule that matches. Documents already routed keep the assignee they were given.",
+    ruleFail: "Could not save: ",
+    ruleEditHint: "Click a rule to edit it. Changes take effect on the next document — nothing already routed is moved.",
     noRuleWarn: "No rule matched. Add a catch-all rule - without one an item can arrive with no owner.",
     noAmount: "no amount in the document", amountIs: "amount is {a}",
     channelIs: "channel is {c}", deptIs: "department is {d}", urgIs: "urgency is {u}",
@@ -1027,6 +1054,19 @@ var T = {
     simulator: "סימולטור",
     simSub: "בוחרים סיווג ורואים מי היה מקבל אותו ‑ בלי להעלות קובץ ובלי לחכות. זה מריץ בדיוק את לוגיקת ההתאמה שצמתי ה‑n8n יריצו.",
     amountPh: "סכום", ruleLbl: "כלל", why: "למה",
+
+    ruleAdd: "כלל חדש", ruleNew: "כלל חדש", ruleEdit: "עריכת כלל",
+    ruleConds: "תנאים",
+    ruleLabelHint: "נשמר כפי שנכתב. זה השם שמופיע ביומן ב‑Google Sheets כשהכלל הזה מחליט משהו, ולכן הוא נשאר בשפה אחת.",
+    fRank: "דירוג", fLabel: "שם", fAssign: "מגיע אל", fActive: "פעיל",
+    ruleSave: "שמירה", ruleSaving: "שומר…", ruleDelete: "מחיקה", ruleCancel: "ביטול",
+    ruleRankHint: "דירוג נמוך נבדק קודם. הכלל הראשון שמתאים מנצח.",
+    ruleCondHint: "תנאי שנשאר על ״הכל״ פירושו שלכלל לא אכפת ממנו. כלל בלי אף תנאי מתאים להכל, ולכן מקומו רק בסוף.",
+    ruleHits: "כפי שהוא כתוב, הכלל הזה היה מנצח ב‑{n} מתוך {m} המסמכים שבמסד.",
+    ruleHitsNone: "כפי שהוא כתוב, הכלל הזה לא היה מנצח באף אחד מ‑{m} המסמכים שבמסד. יכול להיות שזה נכון ‑ כלל שממתין לסוג מסמך שעוד לא הגיע ‑ ויכול להיות שדירוג נמוך יותר כבר תופס אותם.",
+    ruleDelAsk: "למחוק את ״{a}״?\n\nמסמכים שהכלל הזה היה תופס יעברו לכלל הבא שמתאים. מסמכים שכבר נותבו נשארים עם האחראי שקיבלו.",
+    ruleFail: "לא נשמר: ",
+    ruleEditHint: "לחיצה על כלל פותחת אותו לעריכה. שינוי משפיע על המסמך הבא ‑ שום דבר שכבר נותב לא זז.",
     noRuleWarn: "אף כלל לא התאים. צריך להוסיף כלל תפס־הכל ‑ בלעדיו פריט יכול להגיע בלי אחראי.",
     noAmount: "אין סכום במסמך", amountIs: "הסכום הוא {a}",
     channelIs: "הערוץ הוא {c}", deptIs: "המחלקה היא {d}", urgIs: "הדחיפות {u}",
@@ -1209,12 +1249,13 @@ function hookUrl(name){
 }
 function resetUrl(){ return hookUrl("RESET"); }
 function scanUrl(){  return hookUrl("SCAN"); }
+function rulesUrl(){ return hookUrl("RULES"); }
 
-function postHook(url){
+function postHook(url, payload){
   return fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json", "ngrok-skip-browser-warning": "1" },
-    body: "{}"
+    body: JSON.stringify(payload || {})
   }).then(function(r){
     return r.json().catch(function(){ return null; }).then(function(d){
       if (!r.ok || !d || d.success !== true)
@@ -1277,6 +1318,45 @@ function doScan(){
 }
 
 function countDocuments(){ return db.kind === "live" ? live.documents.length : 0; }
+
+/* ------------------------------------------------------ editing rules ---- */
+/* Same shape as Reset and Scan: the page describes what it wants, WF-7 decides
+ * whether to do it. Every check that matters - rank uniqueness, the enums, an
+ * assignee that exists, and refusing to delete the last catch-all - is repeated
+ * server-side, because the checks below only stop honest mistakes. A form is
+ * not a security boundary; the webhook is. */
+
+function ruleEditable(){ return db.kind === "live" && !!rulesUrl(); }
+
+/* Which documents this rule would actually win, not merely match. A rule can
+ * match a hundred documents and win none of them because a lower rank got
+ * there first, and that is exactly the mistake worth catching before saving. */
+function rulePreview(draft){
+  var others = db.routingRules().filter(function(x){ return x.id !== draft.id; });
+  var all = others.concat([draft]).sort(function(a, b){ return a.rank - b.rank; });
+  var docs = db.documents(), win = 0;
+  for (var i = 0; i < docs.length; i++){
+    var d = docs[i];
+    if (matchRule(all, { channel:d.channel, document_type:d.document_type,
+        department:d.department, urgency:d.urgency, amount:d.amount }) === draft) win++;
+  }
+  return { win: win, total: docs.length };
+}
+
+function sendRule(payload, onDone){
+  postHook(rulesUrl(), payload).then(function(){
+    /* Re-read rather than patch the local array: what the screen shows is then
+     * what the database holds, including anything WF-7 normalised on the way. */
+    return fetchTable("routing_rules", "select=*&order=rank.asc").then(function(rows){
+      live.routing_rules = rows;
+      closeSheet();
+      render();
+    });
+  }).catch(function(e){
+    alert(t("ruleFail") + (e && e.message ? e.message : String(e)));
+    if (onDone) onDone();
+  });
+}
 
 /* Poll until the expected rows land, then reload. A document can also fail
  * inside WF-4 — an unreadable scan, a duplicate source_ref — so the target is
@@ -1518,7 +1598,7 @@ function nf(v){
 var state = {
   screen: "flow", filters: {},
   sim: { channel:"drive", document_type:"invoice", department:"Finance", urgency:"Medium", amount:"" },
-  flowDoc: "d1", mailDoc: "d1"
+  flowDoc: "d1", mailDoc: "d1", ruleId: null
 };
 
 function go(id){ state.screen = id; state.filters = {}; closeSheet(); render(); window.scrollTo(0,0); }
@@ -1930,8 +2010,11 @@ function renderRules(){
   var rules = db.routingRules();
   var anyC = '<span class="dim3">' + esc(t("any")) + '</span>';
 
+  var edit = ruleEditable();
+
   var rows = rules.map(function(r){
-    return '<tr>'
+    return '<tr' + (edit ? ' class="click" onclick="openRuleEditor(\'' + r.id + '\')"' : '')
+      +   (r.is_active === false ? ' style="opacity:.5"' : '') + '>'
       + '<td class="num nowrap">' + r.rank + '</td>'
       + '<td>' + txt(dbt(r.label)) + '</td>'
       + '<td class="nowrap">' + (r.match_channel ? esc(t(r.match_channel)) : anyC) + '</td>'
@@ -1964,7 +2047,10 @@ function renderRules(){
       + '</dl>';
   }
 
-  return head("navRules", "rulesSub")
+  return head("navRules", "rulesSub",
+      edit ? '<button class="btn btn-primary btn-sm" style="margin-inline-start:auto" onclick="openRuleEditor()">'
+             + esc(t("ruleAdd")) + '</button>' : "")
+    + (edit ? '<p class="sub" style="margin-top:-10px">' + esc(t("ruleEditHint")) + '</p>' : "")
     + panel('<table class="t"><thead><tr>'
         + ['cRank','cRule','cChannel','cType','cDept','cUrgency','cAmount','cAssign']
             .map(function(k){ return '<th>' + esc(t(k)) + '</th>'; }).join("")
@@ -1979,6 +2065,124 @@ function renderRules(){
     +   '<input type="number" placeholder="' + esc(t("amountPh")) + '" value="' + esc(s.amount)
     +     '" style="width:120px" oninput="setSim(\'amount\',this.value)">'
     + '</div><div style="padding:16px 18px">' + res + '</div></div>';
+}
+
+/* ======================================================== rules editor == */
+/* Rendered into the same side sheet the document detail uses, so the scrim,
+ * the Escape key and the close button already work.
+ *
+ * The form is read at submit time rather than re-rendered on every keystroke:
+ * re-rendering would rebuild the inputs and throw away the caret. Only the
+ * preview line updates live, and it updates one span. */
+
+function ruleField(label, inner, hint){
+  return '<div style="margin-bottom:14px">'
+    + '<div class="lbl" style="margin-bottom:5px">' + esc(t(label)) + '</div>' + inner
+    + (hint ? '<div class="dim3" style="font-size:12px;margin-top:5px">' + esc(t(hint)) + '</div>' : '')
+    + '</div>';
+}
+
+function openRuleEditor(id){
+  var r = id ? byId(db.routingRules(), id) : null;
+  var W = 'style="width:100%"';
+
+  /* A new rule is offered the next free hundred rather than a duplicate of an
+   * existing rank, because a clash is the one error the form cannot fix for
+   * you - it has to choose someone's rank to change. */
+  var used = db.routingRules().map(function(x){ return x.rank; });
+  var nextRank = r ? r.rank : Math.min(999, (used.length ? Math.max.apply(null, used) : 0) + 1);
+
+  var sel = function(name, list, cur, anyKey){
+    return '<select id="rf_' + name + '" ' + W + ' oninput="ruleLive()">'
+      + opts(list, cur == null ? "" : cur, anyKey) + '</select>';
+  };
+
+  var h = '<div class="shead"><h3>' + esc(t(r ? "ruleEdit" : "ruleNew")) + '</h3>'
+    + '<button class="xbtn" onclick="closeSheet()" aria-label="Close">&times;</button></div>'
+    + '<div class="ssec">'
+    + ruleField("fLabel", '<input type="text" id="rf_label" maxlength="80" ' + W
+        + ' value="' + esc(r ? val(r.label) : "") + '">', "ruleLabelHint")
+    + ruleField("fRank", '<input type="number" id="rf_rank" min="1" max="999" step="1" ' + W
+        + ' value="' + nextRank + '" oninput="ruleLive()">', "ruleRankHint")
+    + ruleField("fAssign", '<select id="rf_assign" ' + W + '>'
+        + db.people().map(function(p){
+            return '<option value="' + p.id + '"' + (r && r.assign_to === p.id ? ' selected' : '') + '>'
+                 + esc(val(p.full_name)) + ' · ' + esc(dbt(p.role_title)) + '</option>';
+          }).join("") + '</select>')
+    + '</div><div class="ssec">'
+    + '<h4>' + esc(t("ruleConds")) + '</h4>'
+    + ruleField("cChannel",  sel("channel",  D.CHANNELS,    r && r.match_channel,    "anyChannel"))
+    + ruleField("cType",     sel("type",     D.DOC_TYPES,   r && r.match_doc_type,   "anyType"))
+    + ruleField("cDept",     sel("dept",     D.DEPARTMENTS, r && r.match_department, "anyDept"))
+    + ruleField("cUrgency",  sel("urgency",  D.URGENCIES,   r && r.match_urgency,    "anyUrgency"))
+    + ruleField("cAmount",   '<input type="number" id="rf_amount" min="0" step="0.01" ' + W
+        + ' placeholder="' + esc(t("any")) + '" value="'
+        + (r && r.min_amount != null ? esc(r.min_amount) : "") + '" oninput="ruleLive()">')
+    + '<label style="display:flex;gap:8px;align-items:center;font-size:13.5px">'
+    +   '<input type="checkbox" id="rf_active"' + (!r || r.is_active !== false ? ' checked' : '') + '>'
+    +   esc(t("fActive")) + '</label>'
+    + '<div class="dim3" style="font-size:12px;margin-top:12px">' + esc(t("ruleCondHint")) + '</div>'
+    + '</div><div class="ssec">'
+    + '<div class="banner" id="rf_preview"></div>'
+    + '<div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">'
+    +   '<button class="btn btn-primary btn-sm" id="rf_save" onclick="submitRule(' + (r ? "'" + r.id + "'" : "null") + ')">'
+    +     esc(t("ruleSave")) + '</button>'
+    +   '<button class="btn btn-sm" onclick="closeSheet()">' + esc(t("ruleCancel")) + '</button>'
+    +   (r ? '<button class="btn btn-sm" style="margin-inline-start:auto;color:var(--stuck-bg)" '
+            + 'onclick="removeRule(\'' + r.id + '\')">' + esc(t("ruleDelete")) + '</button>' : "")
+    + '</div></div>';
+
+  state.ruleId = r ? r.id : null;
+  document.getElementById("sheet").innerHTML = h;
+  document.getElementById("sheet").classList.add("on");
+  document.getElementById("scrim").classList.add("on");
+  ruleLive();
+}
+
+/* Reads the form as it stands. Kept separate so the preview and the submit
+ * path can never disagree about what the form says. */
+function ruleDraft(id){
+  var v = function(x){ var e = document.getElementById("rf_" + x); return e ? e.value : ""; };
+  var amt = v("amount").trim();
+  return {
+    id: id || null,
+    rank: Number(v("rank")),
+    label: v("label").trim(),
+    match_channel:    v("channel")  || null,
+    match_doc_type:   v("type")     || null,
+    match_department: v("dept")     || null,
+    match_urgency:    v("urgency")  || null,
+    min_amount: amt === "" ? null : Number(amt),
+    assign_to: v("assign"),
+    is_active: document.getElementById("rf_active").checked
+  };
+}
+
+function ruleLive(){
+  var el = document.getElementById("rf_preview");
+  if (!el) return;
+  /* state.ruleId, not null: while editing rule X the draft replaces X in the
+   * ranking. Leaving X in would make the rule compete with itself and the
+   * count would read 0 for every edit. */
+  var p = rulePreview(ruleDraft(state.ruleId));
+  el.textContent = p.win
+    ? t("ruleHits", { n:p.win, m:p.total })
+    : t("ruleHitsNone", { m:p.total });
+}
+
+function submitRule(id){
+  var draft = ruleDraft(id);
+  var btn = document.getElementById("rf_save");
+  btn.disabled = true;
+  btn.textContent = t("ruleSaving");
+  sendRule({ action: id ? "update" : "create", id: id || undefined, rule: draft },
+    function(){ btn.disabled = false; btn.textContent = t("ruleSave"); });
+}
+
+function removeRule(id){
+  var r = byId(db.routingRules(), id);
+  if (!r || !confirm(t("ruleDelAsk", { a: dbt(r.label) }))) return;
+  sendRule({ action: "delete", id: id });
 }
 
 /* =========================================================== dashboard == */

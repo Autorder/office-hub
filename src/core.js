@@ -134,6 +134,20 @@ var T = {
     simulator: "Simulator",
     simSub: "Pick a classification and see who would receive it - no file upload, no waiting. This runs the exact matching logic the n8n nodes will run.",
     amountPh: "amount", ruleLbl: "Rule", why: "Why",
+
+    /* rules editor */
+    ruleAdd: "Add rule", ruleNew: "New rule", ruleEdit: "Edit rule",
+    ruleConds: "Conditions",
+    ruleLabelHint: "Stored as written. This is the name that appears in the Google Sheet log when this rule decides something, so it stays in one language.",
+    fRank: "Rank", fLabel: "Name", fAssign: "Assign to", fActive: "Active",
+    ruleSave: "Save", ruleSaving: "Saving…", ruleDelete: "Delete", ruleCancel: "Cancel",
+    ruleRankHint: "Lower ranks are checked first. The first rule that matches wins.",
+    ruleCondHint: "Leave a condition on “any” to mean the rule does not care about it. A rule with no conditions at all matches everything, so it only belongs last.",
+    ruleHits: "As written, this rule would win {n} of the {m} documents on file.",
+    ruleHitsNone: "As written, this rule would win none of the {m} documents on file. That may be correct for a rule waiting for a document type nobody has sent yet — or it may mean an earlier rank already takes them.",
+    ruleDelAsk: "Delete “{a}”?\n\nDocuments it used to catch will fall through to the next rule that matches. Documents already routed keep the assignee they were given.",
+    ruleFail: "Could not save: ",
+    ruleEditHint: "Click a rule to edit it. Changes take effect on the next document — nothing already routed is moved.",
     noRuleWarn: "No rule matched. Add a catch-all rule - without one an item can arrive with no owner.",
     noAmount: "no amount in the document", amountIs: "amount is {a}",
     channelIs: "channel is {c}", deptIs: "department is {d}", urgIs: "urgency is {u}",
@@ -276,6 +290,19 @@ var T = {
     simulator: "סימולטור",
     simSub: "בוחרים סיווג ורואים מי היה מקבל אותו ‑ בלי להעלות קובץ ובלי לחכות. זה מריץ בדיוק את לוגיקת ההתאמה שצמתי ה‑n8n יריצו.",
     amountPh: "סכום", ruleLbl: "כלל", why: "למה",
+
+    ruleAdd: "כלל חדש", ruleNew: "כלל חדש", ruleEdit: "עריכת כלל",
+    ruleConds: "תנאים",
+    ruleLabelHint: "נשמר כפי שנכתב. זה השם שמופיע ביומן ב‑Google Sheets כשהכלל הזה מחליט משהו, ולכן הוא נשאר בשפה אחת.",
+    fRank: "דירוג", fLabel: "שם", fAssign: "מגיע אל", fActive: "פעיל",
+    ruleSave: "שמירה", ruleSaving: "שומר…", ruleDelete: "מחיקה", ruleCancel: "ביטול",
+    ruleRankHint: "דירוג נמוך נבדק קודם. הכלל הראשון שמתאים מנצח.",
+    ruleCondHint: "תנאי שנשאר על ״הכל״ פירושו שלכלל לא אכפת ממנו. כלל בלי אף תנאי מתאים להכל, ולכן מקומו רק בסוף.",
+    ruleHits: "כפי שהוא כתוב, הכלל הזה היה מנצח ב‑{n} מתוך {m} המסמכים שבמסד.",
+    ruleHitsNone: "כפי שהוא כתוב, הכלל הזה לא היה מנצח באף אחד מ‑{m} המסמכים שבמסד. יכול להיות שזה נכון ‑ כלל שממתין לסוג מסמך שעוד לא הגיע ‑ ויכול להיות שדירוג נמוך יותר כבר תופס אותם.",
+    ruleDelAsk: "למחוק את ״{a}״?\n\nמסמכים שהכלל הזה היה תופס יעברו לכלל הבא שמתאים. מסמכים שכבר נותבו נשארים עם האחראי שקיבלו.",
+    ruleFail: "לא נשמר: ",
+    ruleEditHint: "לחיצה על כלל פותחת אותו לעריכה. שינוי משפיע על המסמך הבא ‑ שום דבר שכבר נותב לא זז.",
     noRuleWarn: "אף כלל לא התאים. צריך להוסיף כלל תפס־הכל ‑ בלעדיו פריט יכול להגיע בלי אחראי.",
     noAmount: "אין סכום במסמך", amountIs: "הסכום הוא {a}",
     channelIs: "הערוץ הוא {c}", deptIs: "המחלקה היא {d}", urgIs: "הדחיפות {u}",
@@ -458,12 +485,13 @@ function hookUrl(name){
 }
 function resetUrl(){ return hookUrl("RESET"); }
 function scanUrl(){  return hookUrl("SCAN"); }
+function rulesUrl(){ return hookUrl("RULES"); }
 
-function postHook(url){
+function postHook(url, payload){
   return fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json", "ngrok-skip-browser-warning": "1" },
-    body: "{}"
+    body: JSON.stringify(payload || {})
   }).then(function(r){
     return r.json().catch(function(){ return null; }).then(function(d){
       if (!r.ok || !d || d.success !== true)
@@ -526,6 +554,45 @@ function doScan(){
 }
 
 function countDocuments(){ return db.kind === "live" ? live.documents.length : 0; }
+
+/* ------------------------------------------------------ editing rules ---- */
+/* Same shape as Reset and Scan: the page describes what it wants, WF-7 decides
+ * whether to do it. Every check that matters - rank uniqueness, the enums, an
+ * assignee that exists, and refusing to delete the last catch-all - is repeated
+ * server-side, because the checks below only stop honest mistakes. A form is
+ * not a security boundary; the webhook is. */
+
+function ruleEditable(){ return db.kind === "live" && !!rulesUrl(); }
+
+/* Which documents this rule would actually win, not merely match. A rule can
+ * match a hundred documents and win none of them because a lower rank got
+ * there first, and that is exactly the mistake worth catching before saving. */
+function rulePreview(draft){
+  var others = db.routingRules().filter(function(x){ return x.id !== draft.id; });
+  var all = others.concat([draft]).sort(function(a, b){ return a.rank - b.rank; });
+  var docs = db.documents(), win = 0;
+  for (var i = 0; i < docs.length; i++){
+    var d = docs[i];
+    if (matchRule(all, { channel:d.channel, document_type:d.document_type,
+        department:d.department, urgency:d.urgency, amount:d.amount }) === draft) win++;
+  }
+  return { win: win, total: docs.length };
+}
+
+function sendRule(payload, onDone){
+  postHook(rulesUrl(), payload).then(function(){
+    /* Re-read rather than patch the local array: what the screen shows is then
+     * what the database holds, including anything WF-7 normalised on the way. */
+    return fetchTable("routing_rules", "select=*&order=rank.asc").then(function(rows){
+      live.routing_rules = rows;
+      closeSheet();
+      render();
+    });
+  }).catch(function(e){
+    alert(t("ruleFail") + (e && e.message ? e.message : String(e)));
+    if (onDone) onDone();
+  });
+}
 
 /* Poll until the expected rows land, then reload. A document can also fail
  * inside WF-4 — an unreadable scan, a duplicate source_ref — so the target is
@@ -767,7 +834,7 @@ function nf(v){
 var state = {
   screen: "flow", filters: {},
   sim: { channel:"drive", document_type:"invoice", department:"Finance", urgency:"Medium", amount:"" },
-  flowDoc: "d1", mailDoc: "d1"
+  flowDoc: "d1", mailDoc: "d1", ruleId: null
 };
 
 function go(id){ state.screen = id; state.filters = {}; closeSheet(); render(); window.scrollTo(0,0); }

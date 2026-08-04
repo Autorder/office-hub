@@ -41,6 +41,19 @@ window.OFFICE_HUB_CONFIG = {
      the local one. Leave empty to hide the Scan button entirely. */
   N8N_SCAN_WEBHOOK_URL: "https://playing-twig-evergreen.ngrok-free.dev/webhook/office-scan",
 
-  N8N_SCAN_WEBHOOK_URL_LOCAL: "http://localhost:5678/webhook/office-scan"
+  N8N_SCAN_WEBHOOK_URL_LOCAL: "http://localhost:5678/webhook/office-scan",
+
+  /* WF-7 in n8n. The rules editor posts here - create, update and delete.
+
+     The browser does not write to routing_rules itself, and the reason is the
+     key three lines above this one: it is public, so a page that could edit a
+     routing rule would let anyone who opens the URL decide where invoices go.
+     WF-7 holds the service credential, validates every field, and refuses to
+     delete the last catch-all.
+
+     Leave empty to make the Rules screen read-only. */
+  N8N_RULES_WEBHOOK_URL: "https://playing-twig-evergreen.ngrok-free.dev/webhook/office-rules",
+
+  N8N_RULES_WEBHOOK_URL_LOCAL: "http://localhost:5678/webhook/office-rules"
 
 };
