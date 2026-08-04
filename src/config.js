@@ -15,6 +15,21 @@ window.OFFICE_HUB_CONFIG = {
 
   SUPABASE_URL: "https://dljqfccjqtrrhzjdzyhu.supabase.co",
 
-  SUPABASE_PUBLISHABLE_KEY: "sb_publishable_O3XvaR9Nv_t4dwFycPXIyQ_uby6ctCK"
+  SUPABASE_PUBLISHABLE_KEY: "sb_publishable_O3XvaR9Nv_t4dwFycPXIyQ_uby6ctCK",
+
+  /* WF-5 in n8n. The Reset button posts here; n8n does the deleting with its
+     own service-role credential, so the browser never holds the power to
+     erase anything by itself.
+
+     Used when the page is served from autorder.github.io. An https page
+     cannot call http, so this has to be the tunnel and not localhost.
+     ngrok free URLs change on every restart - update the host when it does.
+
+     Leave empty to hide the Reset button entirely. */
+  N8N_RESET_WEBHOOK_URL: "https://playing-twig-evergreen.ngrok-free.dev/webhook/office-reset",
+
+  /* Used instead when the page is opened on localhost, so resetting works
+     with no tunnel running. */
+  N8N_RESET_WEBHOOK_URL_LOCAL: "http://localhost:5678/webhook/office-reset"
 
 };

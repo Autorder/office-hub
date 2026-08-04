@@ -10,6 +10,14 @@ var T = {
     tagline: "Document routing and work queue",
     srcMock: "Mock data", srcLive: "Connected to Supabase",
 
+    resetBtn: "Reset demo data",
+    resetBusy: "Resetting…",
+    resetAsk: "This deletes every processed document, its task and its notification, "
+            + "and clears the log spreadsheet.\n\nPeople and routing rules are kept. "
+            + "Files in Office Processed move back to Office Inbox.\n\nContinue?",
+    resetOk:  "Cleared. Reloading…",
+    resetFail: "Reset failed: ",
+
     navFlow: "Flow", navInbox: "Inbox", navReview: "Needs review", navTasks: "Tasks",
     navEmails: "Emails", navPeople: "People", navRules: "Rules", navDash: "Dashboard",
 
@@ -138,6 +146,14 @@ var T = {
   he: {
     tagline: "ניתוב מסמכים ותור עבודה",
     srcMock: "נתוני הדגמה", srcLive: "מחובר ל‑Supabase",
+
+    resetBtn: "אפס נתוני הדגמה",
+    resetBusy: "מאפס…",
+    resetAsk: "הפעולה מוחקת כל מסמך שעובד, את המשימה שלו ואת ההתראה שלו, "
+            + "ומנקה את גיליון היומן.\n\nהאנשים וכללי הניתוב נשמרים. "
+            + "קבצים ב‑Office Processed יחזרו ל‑Office Inbox.\n\nלהמשיך?",
+    resetOk:  "אופס. טוען מחדש…",
+    resetFail: "האיפוס נכשל: ",
 
     navFlow: "זרימה", navInbox: "תיבה", navReview: "דורש בדיקה", navTasks: "משימות",
     navEmails: "מיילים", navPeople: "אנשים", navRules: "כללים", navDash: "לוח בקרה",
@@ -292,6 +308,8 @@ function setLang(l){
   for (var i=0;i<bs.length;i++) bs[i].setAttribute("aria-pressed", String(bs[i].dataset.lang === l));
   document.getElementById("tagline").textContent = t("tagline");
   document.getElementById("srcPill").textContent = t(db.kind === "mock" ? "srcMock" : "srcLive");
+  var rb = document.getElementById("resetBtn");
+  if (rb && !rb.disabled) rb.textContent = t("resetBtn");
   closeSheet();
   render();
 }
@@ -342,6 +360,46 @@ var supabaseDb = {
 };
 
 var db = mockDb;
+
+/* ------------------------------------------------------------ reset ---- */
+/* The button asks n8n to clear the demo data. Nothing is deleted from here:
+ * this page carries the publishable key, which is public by design, and a
+ * page that could delete rows on its own would let anyone who opens the URL
+ * do the same. WF-5 holds the service-role credential and does the work. */
+
+function resetUrl(){
+  var c = window.OFFICE_HUB_CONFIG || {};
+  var local = location.hostname === "localhost" || location.hostname === "127.0.0.1";
+  return (local && c.N8N_RESET_WEBHOOK_URL_LOCAL) || c.N8N_RESET_WEBHOOK_URL || "";
+}
+
+function doReset(){
+  var url = resetUrl();
+  if (!url || !confirm(t("resetAsk"))) return;
+
+  var btn = document.getElementById("resetBtn");
+  btn.disabled = true;
+  btn.textContent = t("resetBusy");
+
+  fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "ngrok-skip-browser-warning": "1" },
+    body: "{}"
+  }).then(function(r){
+    return r.json().catch(function(){ return null; }).then(function(d){
+      if (!r.ok || !d || d.success !== true)
+        throw new Error((d && (d.message || d.error)) || ("HTTP " + r.status));
+      btn.textContent = t("resetOk");
+      /* Reload rather than clear the arrays: the page then shows exactly what
+       * the database holds, with no chance of the two drifting apart. */
+      location.reload();
+    });
+  }).catch(function(e){
+    alert(t("resetFail") + (e && e.message ? e.message : String(e)));
+    btn.disabled = false;
+    btn.textContent = t("resetBtn");
+  });
+}
 
 function liveConfigured(){
   var c = window.OFFICE_HUB_CONFIG || {};
@@ -593,9 +651,16 @@ function boot(){
 
   /* Draw with the demo set first. The page is usable before the network
    * answers, and stays usable if it never does. */
+  var rb = document.getElementById("resetBtn");
+  rb.textContent = t("resetBtn");
+  rb.addEventListener("click", doReset);
+
   loadLive().then(function(switched){
     if (!switched) return;
     document.getElementById("srcPill").textContent = t("srcLive");
+    /* Only offered against the real database. On the demo set there
+     * is nothing to reset, and the button would just mislead. */
+    if (resetUrl()) rb.hidden = false;
     render();
   });
 }
