@@ -340,6 +340,8 @@ var DBT = {
     "Anything the model marks HR": "כל מה שהמודל מסמן ככוח אדם",
     "Leads from the website form": "לידים מהטופס באתר",
     "Requests to sales": "בקשות למכירות",
+    "Reports to management": "דוחות להנהלה",
+    "Contracts to management": "חוזים להנהלה",
     "Reports and contracts to management": "דוחות וחוזים להנהלה",
     "Catch-all": "תפס־הכל"
   }
