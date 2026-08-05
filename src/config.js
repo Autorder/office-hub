@@ -22,11 +22,14 @@ window.OFFICE_HUB_CONFIG = {
      erase anything by itself.
 
      Used when the page is served from autorder.github.io. An https page
-     cannot call http, so this has to be the tunnel and not localhost.
-     ngrok free URLs change on every restart - update the host when it does.
+     cannot call http, so this has to be the server and not localhost.
+
+     This was an ngrok tunnel until n8n moved onto a VPS. The tunnel's URL
+     changed on every restart and it died whenever the laptop slept; the
+     duckdns host is fixed and the certificate is Let's Encrypt.
 
      Leave empty to hide the Reset button entirely. */
-  N8N_RESET_WEBHOOK_URL: "https://playing-twig-evergreen.ngrok-free.dev/webhook/office-reset",
+  N8N_RESET_WEBHOOK_URL: "https://autorder-n8n.duckdns.org/webhook/office-reset",
 
   /* Used instead when the page is opened on localhost, so resetting works
      with no tunnel running. */
@@ -37,9 +40,9 @@ window.OFFICE_HUB_CONFIG = {
      Inbox - or dropped while n8n was down - would never be picked up. This
      is the manual sweep: list the folder, process whatever is in it.
 
-     Same host rule as above: tunnel for the published page, localhost for
-     the local one. Leave empty to hide the Scan button entirely. */
-  N8N_SCAN_WEBHOOK_URL: "https://playing-twig-evergreen.ngrok-free.dev/webhook/office-scan",
+     Same host rule as above: the server for the published page, localhost
+     for the local one. Leave empty to hide the Scan button entirely. */
+  N8N_SCAN_WEBHOOK_URL: "https://autorder-n8n.duckdns.org/webhook/office-scan",
 
   N8N_SCAN_WEBHOOK_URL_LOCAL: "http://localhost:5678/webhook/office-scan",
 
@@ -52,7 +55,7 @@ window.OFFICE_HUB_CONFIG = {
      delete the last catch-all.
 
      Leave empty to make the Rules screen read-only. */
-  N8N_RULES_WEBHOOK_URL: "https://playing-twig-evergreen.ngrok-free.dev/webhook/office-rules",
+  N8N_RULES_WEBHOOK_URL: "https://autorder-n8n.duckdns.org/webhook/office-rules",
 
   N8N_RULES_WEBHOOK_URL_LOCAL: "http://localhost:5678/webhook/office-rules",
 
@@ -63,7 +66,7 @@ window.OFFICE_HUB_CONFIG = {
      is still created, and the notification goes to a stranger.
 
      Leave empty to make the People screen read-only. */
-  N8N_PEOPLE_WEBHOOK_URL: "https://playing-twig-evergreen.ngrok-free.dev/webhook/office-people",
+  N8N_PEOPLE_WEBHOOK_URL: "https://autorder-n8n.duckdns.org/webhook/office-people",
 
   N8N_PEOPLE_WEBHOOK_URL_LOCAL: "http://localhost:5678/webhook/office-people",
 
@@ -74,7 +77,7 @@ window.OFFICE_HUB_CONFIG = {
      is exactly the thing this indirection exists to stop needing.
 
      Leave empty to make the Departments table read-only. */
-  N8N_DEPTS_WEBHOOK_URL: "https://playing-twig-evergreen.ngrok-free.dev/webhook/office-departments",
+  N8N_DEPTS_WEBHOOK_URL: "https://autorder-n8n.duckdns.org/webhook/office-departments",
 
   N8N_DEPTS_WEBHOOK_URL_LOCAL: "http://localhost:5678/webhook/office-departments"
 
