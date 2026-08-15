@@ -923,7 +923,9 @@ var T = {
     mNormalOpen: "A new document was processed successfully.",
     mFile: "File", mSender: "Sender", mType: "Type", mDept: "Department",
     mUrgency: "Urgency", mDeadline: "Deadline", mAmount: "Amount",
-    mSummary: "Summary", mAction: "Requested action", mLink: "File in Drive",
+    mSummary: "Summary", mAction: "Requested action",
+    mLinkDrive: "Original file in Drive", mLinkGmail: "Original email in Gmail",
+    mLinkForm: "Original form submission", mLinkOther: "Original document",
     mReview: "NEEDS REVIEW", mReviewNote: "Please check the original before acting on this summary.",
     mNoAction: "No action is required. This is for information only.",
     subjUrgent: "URGENT: {t} from {s}", subjNormal: "Document processed: {f}",
@@ -1127,7 +1129,9 @@ var T = {
     mNormalOpen: "מסמך חדש עובד בהצלחה.",
     mFile: "קובץ", mSender: "שולח", mType: "סוג", mDept: "מחלקה",
     mUrgency: "דחיפות", mDeadline: "תאריך יעד", mAmount: "סכום",
-    mSummary: "תקציר", mAction: "הפעולה הנדרשת", mLink: "הקובץ בדרייב",
+    mSummary: "תקציר", mAction: "הפעולה הנדרשת",
+    mLinkDrive: "הקובץ המקורי בדרייב", mLinkGmail: "המייל המקורי בג׳ימייל",
+    mLinkForm: "שליחת הטופס המקורית", mLinkOther: "המסמך המקורי",
     mReview: "דורש בדיקה", mReviewNote: "נא לבדוק את המסמך המקורי לפני פעולה על סמך התקציר.",
     mNoAction: "לא נדרשת פעולה. זה לידיעה בלבד.",
     subjUrgent: "דחוף: {t} מאת {s}", subjNormal: "מסמך עובד: {f}",
@@ -1778,6 +1782,13 @@ function deriveStatus(d){
   return "processed";
 }
 
+/* WF-4 names the link after the channel the document arrived on, so a Gmail
+ * item is not announced as a file in Drive. These four have to stay in step
+ * with the expression in the two Gmail nodes of WF-4-router.json. */
+function linkLabel(channel){
+  return t({ drive:"mLinkDrive", gmail:"mLinkGmail", form:"mLinkForm" }[channel] || "mLinkOther");
+}
+
 function emailFor(d){
   var r = resolvePerson(d.assigned_to, today());
   var isUrgent = d.urgency === "High";
@@ -1795,7 +1806,7 @@ function emailFor(d){
     + (d.amount != null ? t("mAmount") + ": " + money(d.amount) + "\n" : "")
     + "\n" + t("mSummary") + "\n" + val(d.summary) + "\n"
     + "\n" + t("mAction")  + "\n" + sent(d.requested_action) + "\n"
-    + (d.file_link ? "\n" + t("mLink") + "\n" + d.file_link + "\n" : "")
+    + (d.file_link ? "\n" + linkLabel(d.channel) + "\n" + d.file_link + "\n" : "")
     + (d.status === "needs_review"
         ? "\n" + t("mReview") + "\n" + val(d.review_reason) + "\n" + t("mReviewNote") + "\n"
         : (d.requested_action === "No action found" ? "\n" + t("mNoAction") + "\n" : ""));
